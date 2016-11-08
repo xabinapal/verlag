@@ -6,6 +6,7 @@
       'index': Boolean,
       'path': { 'type': String, 'index': true },
       'title': { 'type': String, 'required': true },
+      'full_title': String,
       'content': [{
         'main': String,
         'title': String,
@@ -19,6 +20,6 @@
       this.find({}, 'index path title position', { sort: { position: 1 } }, cb);
     };
 
-    return mongoose.model('Page', schema);
+    return mongoose.model('Page', schema, 'pages');
   }
 })();

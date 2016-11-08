@@ -17,10 +17,10 @@
       'visible': { 'type': Boolean, 'required': true },
     });
 
-    schema.statics.findByCategory = function(id, cb) {
-      return this.find({ category_id: id }, cb);
+    schema.statics.getPublicationsByCategory = function(category, cb) {
+      return this.find({ category_id: category._id }, cb);
     };
     
-    return mongoose.model('Publication', schema);
+    return mongoose.model('Publication', schema, 'publications');
   }
 })();

@@ -42,8 +42,9 @@
   }));
 
   function getActivePageFactory(path) {
+    path = path.split('/')[1] || '';
     return function(page) {
-      return page.index && path === '/' || path.startsWith(page.path, 1);
+      return path === (page.index ? '' : page.path);
     }
   }
 
@@ -70,8 +71,47 @@
     }
   });
 
+  function parseCatalogRequest(req) {
+    var catalog = req.path.replace(/\//g,  '').split('/');
+    var category = (catalog.length >= 2 ? catalog[1] : null);
+    var publication = (catalog.length >= 3 ? catalog[2] : null);
+
+    models.category.getByPath(category, function(err, res) {
+     category = res;
+    });
+
+    category && models.publication.getByCategory(category, function(err, res) {
+      publication = res;
+    });
+
+    return Object.create({ category: category, publication: publication });
+  }
+
   app.use(function(req, res, next) {
-    res.render('page');
+    if (res.locals.page.catalog) {
+      var catalog = parseCatalogRequest(req);
+      models.category.getAllCategories(function(err, categories) {
+        res.locals.categories = categories;
+        res.locals.catalog = catalog;
+        if (catalog.category && catalog.publication) {
+          res.locals.view = 'catalog-categories';
+        } else if (catalog.category) {
+          res.locals.view = 'catalog-publications';
+        } else {
+          res.locals.view = 'catalog-categories';
+        }
+
+        next();
+      });
+    } else {
+      res.locals.view = 'page';
+      next();
+    }
+  });
+
+  app.use(function(req, res, next) {
+    res.locals.ajax = req.headers['X-Requested-With'] === 'XMLHttpRequest';
+    res.render(res.locals.view);
   });
 
   // error handler
