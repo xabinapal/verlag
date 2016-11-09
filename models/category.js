@@ -3,7 +3,7 @@
 
   module.exports = function(mongoose) {
     var schema = new mongoose.Schema({
-      'normalized_name': { 'type': String, 'index': true },
+      'path': { 'type': String, 'index': true },
       'name': { 'type': String, 'required': true },
       'image': { 'type': String, 'required': true },
       'position': { 'type': Number, 'required': true },
@@ -15,7 +15,7 @@
     };
 
     schema.statics.getByPath = function(path, cb) {
-      this.findOne({ 'normalized_name': path }, cb);
+      this.findOne({ 'path': path }, cb);
     };
     
     return mongoose.model('Category', schema, 'categories');

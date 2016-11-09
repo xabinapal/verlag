@@ -17,7 +17,7 @@
       'visible': { 'type': Boolean, 'required': true },
     });
 
-    schema.statics.getPublicationsByCategory = function(category, cb) {
+    schema.statics.getByCategory = function(category, cb) {
       return this.find({ category_id: category._id }, cb);
     };
     

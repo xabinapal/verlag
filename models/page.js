@@ -5,8 +5,13 @@
     var schema = new mongoose.Schema({
       'index': Boolean,
       'path': { 'type': String, 'index': true },
+      'parameters': [{
+        'type': { 'type': String, 'required': true },
+        'key': { 'type': String, 'required': true },
+        'optional': Boolean
+      }],
       'title': { 'type': String, 'required': true },
-      'full_title': String,
+      'fullTitle': String,
       'content': [{
         'main': String,
         'title': String,

@@ -23,6 +23,9 @@
     });
   });
 
+  var router = require('./router');
+  var catalog = require('./catalog')(models);
+
   // view engine setup
   app.set('views', path.join(__dirname, 'views'));
   app.set('view engine', 'pug');
@@ -41,27 +44,28 @@
     sourceMap: true
   }));
 
-  function getActivePageFactory(path) {
-    path = path.split('/')[1] || '';
-    return function(page) {
-      return path === (page.index ? '' : page.path);
-    }
-  }
+  app.get('/robots.txt', function(req, res, next) {
+    // TODO
+    res.end();
+  });
+
+  app.get('/sitemap.xml', function(req, res, next) {
+    // TODO
+    res.end();
+  });
 
   app.use(function(req, res, next) {
-    var getActivePage = getActivePageFactory(req.path);
     models.page.getAllPages(function(err, pages) {
-      res.locals.pages = pages;
-      res.locals.page = res.locals.pages.find(getActivePage);
+      res.locals.pages = pages.map(router);
+      res.locals.current = res.locals.pages.find(x => x.match(req.path));
       next();
     });
   });
 
   app.use(function(req, res, next) {
-    if (res.locals.page) {
-      res.locals.page.active = true;
-      models.page.findById(res.locals.page._id, function(err, page) {
-        res.locals.page = page;
+    if (res.locals.current.page) {
+      models.page.findById(res.locals.current.page._id, function(err, page) {
+        res.locals.current.page = page;
         next();
       });
     } else {
@@ -71,38 +75,9 @@
     }
   });
 
-  function parseCatalogRequest(req) {
-    var catalog = req.path.replace(/\//g,  '').split('/');
-    var category = (catalog.length >= 2 ? catalog[1] : null);
-    var publication = (catalog.length >= 3 ? catalog[2] : null);
-
-    models.category.getByPath(category, function(err, res) {
-     category = res;
-    });
-
-    category && models.publication.getByCategory(category, function(err, res) {
-      publication = res;
-    });
-
-    return Object.create({ category: category, publication: publication });
-  }
-
   app.use(function(req, res, next) {
-    if (res.locals.page.catalog) {
-      var catalog = parseCatalogRequest(req);
-      models.category.getAllCategories(function(err, categories) {
-        res.locals.categories = categories;
-        res.locals.catalog = catalog;
-        if (catalog.category && catalog.publication) {
-          res.locals.view = 'catalog-categories';
-        } else if (catalog.category) {
-          res.locals.view = 'catalog-publications';
-        } else {
-          res.locals.view = 'catalog-categories';
-        }
-
-        next();
-      });
+    if (res.locals.current.page.catalog) {
+      catalog(req, res, next);
     } else {
       res.locals.view = 'page';
       next();
