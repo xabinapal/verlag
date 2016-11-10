@@ -22,7 +22,11 @@
     });
 
     schema.statics.getAllPages = function(cb) {
-      this.find({}, 'index path title position', { sort: { position: 1 } }, cb);
+      this.find(
+        {},
+        'index path parameters title position',
+        { sort: { position: 1 } },
+        cb);
     };
 
     return mongoose.model('Page', schema, 'pages');

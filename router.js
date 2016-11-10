@@ -9,11 +9,13 @@
     }
 
     this.page = page;
+
     this.basePath = Router.getBasePath(page);
     this.fullPath = Router.getFullPath(page, this.basePath);
 
     this.keys = [];
     this.regexp = pathToRegexp(this.fullPath, this.keys);
+    this.reverse = pathToRegexp.compile(this.fullPath);
   }
 
   Router.getBasePath = function(page) {
@@ -24,18 +26,12 @@
   }
 
   Router.getFullPath = function(page, path) {
-    var params = page.parameters;
-    params && params.forEach(function(parameter) {
-      path += '/:' + parameter.name;
-      if (parameter.optional) {
-        path += '?';
-      }
+    page.parameters && page.parameters.forEach(function(parameter) {
+      path += '/:' + parameter.key;
+      parameter.optional && (path += '?');
     });
 
-    if (path.endsWith('/')) {
-      path = path.slice(0, -1);
-    }
-
+    path.endsWith('/') && (path = path.slice(0, -1));
     return path;
   }
 
@@ -64,21 +60,27 @@
     return true;
   }
 
-  Router.prototype.parameter = function(type) {
-    console.log(type);
-    console.log(this.page.parameters);
-    console.log(this.path);
-    console.log(this.params);
+  Router.prototype.getParamKey = function(type) {
     var param = this.page.parameters.find(x => x.type === type);
-    if (!param) {
-      return undefined;
-    }
+    return param.key;
+  }
 
-    return this.params[param];
+  Router.prototype.getParamVal = function(type) {
+    var param = this.getParamKey(type);
+    return param && this.params[param] || undefined;
   }
 
   Router.prototype.create = function(parameters) {
-    return '/';
+    var params = parameters
+      .map(x => ({ key: this.getParamKey(x.type), value: x.value }))
+      .reduce((dict, val) => (dict[val.key] = val.value) && dict, {});
+
+    try {
+      var route = this.reverse(params);
+      return route;
+    } catch (err) {
+      return null;
+    }
   }
 
   module.exports = Router;
