@@ -30,7 +30,7 @@
         .find({})
         .sort({ insertId: -1 })
         .limit(count)
-        .exec());
+        .exec();
     };
 
     schema.statics.getByCategory = function(category) {

@@ -3,8 +3,9 @@
 
   module.exports = function(models) {
     return function(req, res, next) {
-      var category = res.locals.current.getParamVal('catalog/category');
-      var publication = res.locals.current.getParamVal('catalog/publication');
+      var route = res.locals.routes.current;
+      var category = route.getParameterValue('catalog/category');
+      var publication = route.getParameterValue('catalog/publication');
 
       res.locals.catalog = Object.create({
         categories: undefined,

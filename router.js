@@ -60,19 +60,20 @@
     return true;
   }
 
-  Router.prototype.getParamKey = function(type) {
+  Router.prototype.getParameterKey = function(type) {
     var param = this.page.parameters.find(x => x.type === type);
     return param.key;
   }
 
-  Router.prototype.getParamVal = function(type) {
-    var param = this.getParamKey(type);
+  Router.prototype.getParameterValue = function(type) {
+    console.log(type, this);
+    var param = this.getParameterKey(type);
     return param && this.params[param] || undefined;
   }
 
   Router.prototype.create = function(parameters) {
     var params = parameters
-      .map(x => ({ key: this.getParamKey(x.type), value: x.value }))
+      .map(x => ({ key: this.getParameterKey(x.type), value: x.value }))
       .reduce((dict, val) => (dict[val.key] = val.value) && dict, {});
 
     try {

@@ -6,8 +6,13 @@
 
   module.exports = function(mongoose) {
     var schema = new mongoose.Schema({
-      name: String,
+      key: { type: String, unique: true, required: true },
+      name: { type: String, unique: true, required: true }
     });
+
+    schema.statics.getAll = function() {
+      return this.find({}).exec();
+    };
 
     return mongoose.model(modelName, schema, tableName);
   }

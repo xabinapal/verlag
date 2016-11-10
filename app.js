@@ -19,13 +19,18 @@
   var models = Object.create(null);
   db.on('error', console.error.bind(console, 'connection error:'));
   db.once('open', function() {
-    ['page', 'category', 'publication'].forEach(function(model) {
+    ['menu', 'page', 'category', 'publication'].forEach(function(model) {
       models[model] = require('./models/' + model)(mongoose);
     });
   });
 
-  var router = require('./router');
-  var catalog = require('./catalog')(models);
+  var Menu = require('./menu');
+  var Router = require('./router');
+  var Catalog = require('./catalog')(models);
+
+  app.locals = Object.create({
+    appTitle: 'Editorial Evidencia Médica S.L.'
+  });
 
   // view engine setup
   app.set('views', path.join(__dirname, 'views'));
@@ -56,20 +61,43 @@
   });
 
   app.use(function(req, res, next) {
-    models.page.getAll().then(pages => {
-      pages = pages.map(router);
-      res.locals.pages = pages;
-      res.locals.current = pages.find(x => x.match(req.path));
-      next();
+    res.locals.routes = Object.create({
+      menus: undefined,
+      current: undefined
     });
+
+    models.menu.getAll()
+      .then(menus => {
+        res.locals.routes.menus = menus
+          .map(Menu)
+          .reduce((d, m) => ((d[m.menu.key] = m) && d), {});
+
+        return models.page.getAll();
+      }).then(pages => {
+        var menus = Object.keys(res.locals.routes.menus)
+          .map(menu => res.locals.routes.menus[menu])
+          .reduce((d, m) => ((d[m.menu._id] = m) && d), {});
+
+        pages = pages.map(Router);
+        pages.forEach(page => {
+          page.page.menus && page.page.menus.forEach(menu => {
+            menus[menu.menu].addPage(page);
+          });
+        });
+
+        res.locals.routes.current = pages.find(x => x.match(req.path));
+
+        next();
+      });
   });
 
   app.use(function(req, res, next) {
-    if (res.locals.current.page) {
-      res.locals.current.page.getData().then(page => {
-        res.locals.current.page = page;
-        next();
-      });
+    if (res.locals.routes.current.page) {
+      res.locals.routes.current.page.getData()
+        .then(page => {
+          res.locals.routes.current.page = page;
+          next();
+        });
     } else {
       var err = new Error('Not found');
       err.status = 404;
@@ -78,8 +106,12 @@
   });
 
   app.use(function(req, res, next) {
-    if (res.locals.current.page.catalog) {
-      catalog(req, res, next);
+    if (res.locals.routes.current.page.index) {
+      res.locals.view = 'index';
+      next();
+    }
+    if (res.locals.routes.current.page.catalog) {
+      Catalog(req, res, next);
     } else {
       res.locals.view = 'page';
       next();

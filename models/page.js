@@ -5,6 +5,8 @@
   const tableName = 'pages';
 
   module.exports = function(mongoose) {
+    var ObjectId = mongoose.Schema.Types.ObjectId;
+
     var schema = new mongoose.Schema({
       index: Boolean,
       path: { type: String, unique: true },
@@ -21,7 +23,12 @@
         content: [String]
       }],
       catalog: Boolean,
-      position: { type: Number, required: true },
+      menus: [
+        {
+          menu: { type: ObjectId, required: true, ref: 'Menu' },
+          position: { type: Number, required: true }
+        }
+      ],
       data: [{
         type: { type: String, required: true },
         viewName: { type: String, unique: true },
@@ -35,7 +42,7 @@
 
     schema.statics.getAll = function() {
       return this.find({})
-        .select('index path parameters title position')
+        .select('index path parameters title menus')
         .sort({ position: 1 })
         .exec();
     };
