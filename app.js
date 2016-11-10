@@ -10,6 +10,7 @@
   var cookieParser = require('cookie-parser');
   var bodyParser = require('body-parser');
 
+  mongoose.Promise = global.Promise;
   mongoose.connect('mongodb://localhost/verlag');
 
   var app = express();
@@ -55,16 +56,17 @@
   });
 
   app.use(function(req, res, next) {
-    models.page.getAllPages(function(err, pages) {
-      res.locals.pages = pages.map(router);
-      res.locals.current = res.locals.pages.find(x => x.match(req.path));
+    models.page.getAll().then(pages => {
+      pages = pages.map(router);
+      res.locals.pages = pages;
+      res.locals.current = pages.find(x => x.match(req.path));
       next();
     });
   });
 
   app.use(function(req, res, next) {
     if (res.locals.current.page) {
-      models.page.findById(res.locals.current.page._id, function(err, page) {
+      res.locals.current.page.getData().then(page => {
         res.locals.current.page = page;
         next();
       });

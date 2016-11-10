@@ -1,23 +1,26 @@
 ;(function() {
   'use strict';
 
+  const modelName = 'Category';
+  const tableName = 'categories';
+
   module.exports = function(mongoose) {
     var schema = new mongoose.Schema({
-      'path': { 'type': String, 'index': true },
-      'name': { 'type': String, 'required': true },
-      'image': { 'type': String, 'required': true },
-      'position': { 'type': Number, 'required': true },
-      'visible': { 'type': Boolean, 'required': true },
+      path: { type: String, unique: true },
+      name: { type: String, required: true },
+      image: { type: String, required: true },
+      position: { type: Number, required: true },
+      visible: { type: Boolean, required: true },
     });
 
-    schema.statics.getAllCategories = function(cb) {
-      this.find({ 'visible': true }, null, { sort: { position: 1 } }, cb);
+    schema.statics.getAll = function() {
+      return this.find({ visible: true }).sort({ position: 1 }).exec();
     };
 
-    schema.statics.getByPath = function(path, cb) {
-      this.findOne({ 'path': path }, cb);
+    schema.statics.getByPath = function(path) {
+      return this.findOne({ path: path }).exec();
     };
     
-    return mongoose.model('Category', schema, 'categories');
+    return mongoose.model(modelName, schema, tableName);
   }
 })();

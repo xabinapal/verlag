@@ -7,19 +7,30 @@
       var publication = res.locals.current.getParamVal('catalog/publication');
 
       if (publication) {
-          next();
-      } else if (category) {
-        models.category.getByPath(category, function(err, category) {
-          res.locals.category = category;
           res.locals.view = 'catalog-publications';
           next();
+      } else if (category) {  
+        res.locals.view = 'catalog-publications';
+        res.locals.catalog = Object.create({
+          category: undefined,
+          publications: undefined
         });
+
+        models.category.getByPath(category)
+          .then(function(category) {
+            res.locals.catalog.category = category;
+            return models.publication.getByCategory(category.id);
+          }).then(function(publications) {
+            res.locals.catalog.publications = publications;
+            next();
+          });
       } else {
-        models.category.getAllCategories(function(err, categories) {
-          res.locals.categories = categories;
-          res.locals.view = 'catalog-categories';
-          next();
-        });
+        models.category.getAll()
+          .then(function(categories) {
+            res.locals.categories = categories;
+            res.locals.view = 'catalog-categories';
+            next();
+          });
       }
     }
   }
