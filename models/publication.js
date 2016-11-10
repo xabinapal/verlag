@@ -5,23 +5,36 @@
   const tableName = 'publications';
 
   module.exports = function(mongoose) {
+    var ObjectId = mongoose.Schema.Types.ObjectId;
+
     var schema = new mongoose.Schema({
-      categoryId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Category' },
+      insertId: { type: Number, unique: true, required: true },
+      categoryId: { type: ObjectId, required: true, ref: 'Category' },
       name: { type: String, required: true },
       info: String,
       author: String,
       isbn: String,
       description: String,
       price: Number,
-      soldout: Boolean,
+      isForSale: Boolean,
+      isSoldout: Boolean,
       publishYear: Number,
       image: { type: String, required: true },
       position: { type: Number, required: true },
       visible: { type: Boolean, required: true },
     });
 
+
+    schema.statics.getLatest = function(count) {
+      return this
+        .find({})
+        .sort({ insertId: -1 })
+        .limit(count)
+        .exec());
+    };
+
     schema.statics.getByCategory = function(category) {
-      return this.find({ category_id: category._id }).exec();
+      return this.find({ categoryId: category._id }).sort({ position: -1 }).exec();
     };
     
     return mongoose.model(modelName, schema, tableName);
