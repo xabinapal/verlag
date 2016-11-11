@@ -26,6 +26,7 @@
       menus: [
         {
           menu: { type: ObjectId, required: true, ref: 'Menu' },
+          title: String,
           position: { type: Number, required: true }
         }
       ],
