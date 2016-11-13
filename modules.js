@@ -12,14 +12,28 @@
   }
 
   module.exports.inject = function(req, res, next) {
-    (res.locals.routes.current.page.content || [])
+    var modules = (res.locals.routes.current.page.content || [])
       .filter(section => section.module)
-      .forEach(section => {
+      .map(section => {
         var module = section.module;
         var args = module.args.reduce((dict, arg) => (dict[arg.key] = arg.value) && dict, {});
-        var action = injected[module.name][module.action](section, args, req, res, next);
+        return {
+          section: section,
+          args: args,
+          module: injected[module.name][module.action]
+        };
       });
 
-    next();
+    modules.push(null);
+    (function exec(index) {
+      var module = modules[index];
+      if (module === null) {
+        return next;
+      } else {
+        return function() {
+          module.module(module.section, module.args, req, res, exec(index + 1));
+        }
+      }
+    })(0)();
   }
 })();

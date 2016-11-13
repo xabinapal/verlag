@@ -15,20 +15,26 @@
           current: res.locals.routes.current,
           categories: categories
         });
+
+        next();
       });
   }
 
   function publications(section, args, req, res, next) {
     var view = req.app.get('view getter')(args.view);
-    req.models.category.getByPath(category)
+    req.models.category.getByPath(res.locals.routes.current.getParameterValue('category'))
       .then(function(category) {
         section.title = section.title.replace(args.replace, category.name);
+        section.category = category;
         return req.models.publication.getByCategory(category);
       }).then(function(publications) {
         section.content = pug.renderFile(view, {
           current: res.locals.routes.current,
+          category: section.category,
           publications: publications
         });
+
+        next();
       });
   }
 
@@ -39,6 +45,7 @@
     req.models.publication.getLatest()
       .then(function(publications) {
         section.content = pug.renderFile(view, { publications: publications });
+        next();
       });
   }
 

@@ -17,13 +17,15 @@
       return false;
     }
 
-    var set = condition[1] in route.keys;
+    var set = route.getParameterValue(condition[1]);
     switch (condition[2]) {
       case 'set':
-        return set;
+        console.log('set parameter', condition, set && set.length > 0);
+        return set && set.length > 0;
 
       case 'unset':
-        return !set;
+        console.log('unset parameter', condition, !set || set.length === 0);
+        return !set || set.length === 0;
 
       default:
         return false;

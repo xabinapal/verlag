@@ -70,7 +70,7 @@
   }
 
   Router.prototype.getParameterValue = function(key) {
-    return param && this.params[key] || undefined;
+    return key && this.params[key] || undefined;
   }
 
   Router.prototype.hasParameter = function(type) {
