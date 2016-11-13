@@ -2,6 +2,7 @@
   'use strict';
 
   var pathToRegexp = require('path-to-regexp');
+  var conditional = require('./conditional');
 
   function Router(page) {
     if (!(this instanceof Router)) {
@@ -68,9 +69,8 @@
     return param.key;
   }
 
-  Router.prototype.getParameterValue = function(type) {
-    var param = this.getParameterKey(type);
-    return param && this.params[param] || undefined;
+  Router.prototype.getParameterValue = function(key) {
+    return param && this.params[key] || undefined;
   }
 
   Router.prototype.hasParameter = function(type) {
@@ -78,12 +78,11 @@
   }
 
   Router.prototype.evaluateCondition = function(condition) {
-    return false;
+    return conditional(this, condition);
   }
 
   Router.prototype.create = function(parameters) {
     var params = parameters
-      .map(x => ({ key: this.getParameterKey(x.type), value: x.value }))
       .reduce((dict, val) => (dict[val.key] = val.value) && dict, {});
 
     try {

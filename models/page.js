@@ -7,6 +7,17 @@
   module.exports = function(mongoose) {
     var ObjectId = mongoose.Schema.Types.ObjectId;
 
+    var moduleSchema = new mongoose.Schema({
+      name: { type: String, required: true },
+      action: { type: String, required: true },
+      args: [
+        {
+          key: String,
+          value: String
+        }
+      ]
+    });
+
     var schema = new mongoose.Schema({
       path: { type: String, unique: true },
       parameters: [{
@@ -20,16 +31,7 @@
           main: String,
           title: String,
           content: [String],
-          module: {
-            name: String,
-            action: String,
-            args: [
-              {
-                key: String,
-                value: String
-              }
-            ]
-          },
+          module: moduleSchema,
           conditions: [String]
       }],
       menus: [

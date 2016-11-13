@@ -25,6 +25,11 @@
     // view engine setup
     app.set('views', path.join(__dirname, 'views'));
     app.set('view engine', 'pug');
+    app.set('view getter', function(view) {
+      view = path.join(app.get('views'), view);
+      !path.extname(view) && (view += '.' + app.get('view engine'));
+      return view;
+    });
 
     app.use(logger('dev'));
     app.use(bodyParser.json());
@@ -98,7 +103,6 @@
 
             page.content = content;
             res.locals.routes.current.page = page;
-            console.log(page.content);
             next();
           });
       } else {
