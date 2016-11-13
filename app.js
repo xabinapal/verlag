@@ -8,13 +8,13 @@
     var logger = require('morgan');
     var cookieParser = require('cookie-parser');
     var bodyParser = require('body-parser');
+    var escapeHtml = require('escape-html');
 
     var app = express();
     app.locals = locals;
 
     var Menu = require('./menu');
     var Router = require('./router');
-    var Catalog = require('./catalog')(models);
 
     var modules = require('./modules');
     ['markdown', 'menu', 'contact', 'catalog'].forEach(module => {
@@ -30,6 +30,8 @@
       !path.extname(view) && (view += '.' + app.get('view engine'));
       return view;
     });
+
+    app.disable('x-powered-by');
 
     app.use(logger('dev'));
     app.use(bodyParser.json());
@@ -64,47 +66,45 @@
         current: undefined
       });
 
-      models.menu.getAll()
-        .then(menus => {
-          res.locals.routes.menus = menus
-            .map(Menu)
-            .reduce((d, m) => ((d[m.menu.key] = m) && d), {});
+      models.menu.getAll().then(menus => {
+        res.locals.routes.menus = menus
+          .map(Menu)
+          .reduce((d, m) => ((d[m.menu.key] = m) && d), {});
 
-          return models.page.getAll();
-        }).then(pages => {
-          var menus = Object.keys(res.locals.routes.menus)
-            .map(menu => res.locals.routes.menus[menu])
-            .reduce((d, m) => ((d[m.menu._id] = m) && d), {});
+        return models.page.getAll();
+      }).then(pages => {
+        var menus = Object.keys(res.locals.routes.menus)
+          .map(menu => res.locals.routes.menus[menu])
+          .reduce((d, m) => ((d[m.menu._id] = m) && d), {});
 
-          pages = pages.map(Router);
-          pages.forEach(page => {
-            page.page.menus && page.page.menus.forEach(menu => {
-              menus[menu.menu].addPage(page);
-            });
+        pages = pages.map(Router);
+        pages.forEach(page => {
+          page.page.menus && page.page.menus.forEach(menu => {
+            menus[menu.menu].addPage(page);
           });
-
-          res.locals.routes.current = pages.find(x => x.match(req.path));
-
-          next();
         });
+
+        res.locals.routes.current = pages.find(x => x.match(req.path));
+
+        next();
+      });
     });
 
     app.use(function(req, res, next) {
       var route = res.locals.routes.current;
       if (route) {
-        route.page.getData()
-          .then(page => {
-            var content = page.content
-              .map(section => {
-                return (section.conditions || []).find(x => !route.evaluateCondition(x))
-                  ? null
-                  : section;
-              }).filter(section => section !== null);
+        route.page.getData().then(page => {
+          var content = page.content.map(section => {
+            section.content = escapeHtml(section.content);
+            return (section.conditions || []).find(x => !route.evaluateCondition(x))
+              ? null
+              : section;
+          }).filter(section => section !== null);
 
-            page.content = content;
-            res.locals.routes.current.page = page;
-            next();
-          });
+          page.content = content;
+          res.locals.routes.current.page = page;
+          next();
+        });
       } else {
         var err = new Error('Not found');
         err.status = 404;

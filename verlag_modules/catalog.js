@@ -43,7 +43,10 @@
     var view = req.app.get('view getter')(args.view);
     req.models.publication.getLatest(args.count)
       .then(function(publications) {
-        section.content = pug.renderFile(view, { publications: publications });
+        section.content = pug.renderFile(view, {
+          publications: publications,
+          count: args.count
+        });
         next();
       });
   }
