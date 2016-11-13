@@ -8,7 +8,6 @@
     var ObjectId = mongoose.Schema.Types.ObjectId;
 
     var schema = new mongoose.Schema({
-      index: Boolean,
       path: { type: String, unique: true },
       parameters: [{
         type: { type: String, required: true },
@@ -16,29 +15,30 @@
         optional: Boolean
       }],
       title: { type: String, required: true },
-      fullTitle: String,
-      content: [{
-        main: String,
-        title: String,
-        content: [String]
+      content: [
+        {
+          main: String,
+          title: String,
+          content: [String],
+          module: {
+            name: String,
+            action: String,
+            args: [
+              {
+                key: String,
+                value: String
+              }
+            ]
+          },
+          conditions: [String]
       }],
-      catalog: Boolean,
       menus: [
         {
           menu: { type: ObjectId, required: true, ref: 'Menu' },
-          title: String,
-          position: { type: Number, required: true }
+          position: { type: Number, required: true },
+          title: String
         }
-      ],
-      data: [{
-        type: { type: String, required: true },
-        viewName: { type: String, unique: true },
-        parameters: [{
-          type: { type: String, required: true },
-          key: { type: String, unique: true, required: true },
-          optional: Boolean
-        }]
-      }]
+      ]
     });
 
     schema.statics.getAll = function() {

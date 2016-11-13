@@ -16,6 +16,12 @@
     var Router = require('./router');
     var Catalog = require('./catalog')(models);
 
+    var modules = require('./modules');
+    ['menu', 'contact', 'catalog'].forEach(module => {
+      var m = path.join(__dirname, 'verlag_modules', module);
+      require(m)(modules);
+    });
+
     // view engine setup
     app.set('views', path.join(__dirname, 'views'));
     app.set('view engine', 'pug');
@@ -31,6 +37,11 @@
       indentedSyntax: true,
       sourceMap: true
     }));
+
+    app.use(function(req, res, next) {
+      req.models = models;
+      next();
+    });
 
     app.get('/robots.txt', function(req, res, next) {
       // TODO
@@ -74,10 +85,20 @@
     });
 
     app.use(function(req, res, next) {
-      if (res.locals.routes.current.page) {
-        res.locals.routes.current.page.getData()
+      var route = res.locals.routes.current;
+      if (route) {
+        route.page.getData()
           .then(page => {
+            var content = page.content
+              .map(section => {
+                return (section.conditions || []).find(x => !route.evaluateCondition(x))
+                  ? null
+                  : section;
+              }).filter(section => section !== null);
+
+            page.content = content;
             res.locals.routes.current.page = page;
+            console.log(page.content);
             next();
           });
       } else {
@@ -87,22 +108,11 @@
       }
     });
 
-    app.use(function(req, res, next) {
-      if (res.locals.routes.current.page.index) {
-        res.locals.view = 'index';
-        next();
-      }
-      if (res.locals.routes.current.page.catalog) {
-        Catalog(req, res, next);
-      } else {
-        res.locals.view = 'page';
-        next();
-      }
-    });
+    app.use(modules.inject);
 
     app.use(function(req, res, next) {
       res.locals.ajax = req.headers['X-Requested-With'] === 'XMLHttpRequest';
-      res.render(res.locals.view);
+      res.render('page');
     });
 
     // error handler

@@ -19,7 +19,7 @@
   Menu.prototype.getPages = function() {
     return Array.from(this.pages)
       .slice()
-      .sort((a, b) => this.getPageData(a) - this.getPageData(b));
+      .sort((a, b) => this.getPageData(a).position - this.getPageData(b).position);
   }
 
   Menu.prototype.getPageData = function(route) {
