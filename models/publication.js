@@ -27,7 +27,7 @@
 
     schema.statics.getLatest = function(count) {
       return this
-        .find({})
+        .find()
         .sort({ insertId: -1 })
         .limit(count)
         .exec();

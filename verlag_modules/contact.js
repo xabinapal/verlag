@@ -4,7 +4,6 @@
   const name = 'contact';
   const actions = [form, send];
   
-  var path = require('path');
   var pug = require('pug');
 
   function form(section, args, req, res, next) {

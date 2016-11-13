@@ -4,7 +4,6 @@
   const name = 'catalog';
   const actions = [categories, publications, latest];
 
-  var path = require('path');
   var pug = require('pug');
 
   function categories(section, args, req, res, next) {
@@ -42,7 +41,7 @@
 
   function latest(section, args, req, res, next) {
     var view = req.app.get('view getter')(args.view);
-    req.models.publication.getLatest()
+    req.models.publication.getLatest(args.count)
       .then(function(publications) {
         section.content = pug.renderFile(view, { publications: publications });
         next();

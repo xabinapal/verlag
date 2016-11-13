@@ -17,7 +17,7 @@
     var Catalog = require('./catalog')(models);
 
     var modules = require('./modules');
-    ['menu', 'contact', 'catalog'].forEach(module => {
+    ['markdown', 'menu', 'contact', 'catalog'].forEach(module => {
       var m = path.join(__dirname, 'verlag_modules', module);
       require(m)(modules);
     });

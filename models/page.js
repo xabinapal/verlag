@@ -13,7 +13,7 @@
       args: [
         {
           key: String,
-          value: String
+          value: Object
         }
       ]
     });
@@ -30,7 +30,7 @@
         {
           main: String,
           title: String,
-          content: [String],
+          content: String,
           module: moduleSchema,
           conditions: [String]
       }],
