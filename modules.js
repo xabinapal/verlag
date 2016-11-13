@@ -26,14 +26,10 @@
 
     modules.push(null);
     (function exec(index) {
-      var module = modules[index];
-      if (module === null) {
-        return next;
-      } else {
-        return function() {
-          module.module(module.section, module.args, req, res, exec(index + 1));
-        }
-      }
+      var m = index >= 0 &&  index < modules.length ? modules[index] : null;
+      return m === null
+        ? next
+        : () => m.module(m.section, m.args, req, res, exec(index + 1));
     })(0)();
   }
 })();

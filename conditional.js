@@ -20,11 +20,9 @@
     var set = route.getParameterValue(condition[1]);
     switch (condition[2]) {
       case 'set':
-        console.log('set parameter', condition, set && set.length > 0);
         return set && set.length > 0;
 
       case 'unset':
-        console.log('unset parameter', condition, !set || set.length === 0);
         return !set || set.length === 0;
 
       default:
