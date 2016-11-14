@@ -11,7 +11,7 @@
       onListening: onListening,
       databaseConnection: 'mongodb://localhost/verlag',
 
-      viewsPath: 'views',
+      viewsPath: undefined,
       viewEngine: 'pug',
     };
 
@@ -64,7 +64,7 @@
         });
 
         instance = app(appOptions, modules, models);
-        instance.set('views', path.join(__dirname, serverOptions.viewsPath));
+        instance.set('views', serverOptions.viewsPath);
         instance.set('view engine', serverOptions.viewEngine);
 
         server = http.createServer(instance);

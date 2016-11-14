@@ -1,6 +1,6 @@
 {
   "name": "verlag",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "Web framework for simple publishing house websites",
   "main": "verlag.js",
   "scripts": {
@@ -17,17 +17,13 @@
   "license": "MIT",
   "dependencies": {
     "async": "^2.1.2",
-    "body-parser": "~1.15.2",
-    "cookie-parser": "~1.4.3",
     "debug": "~2.2.0",
     "escape-html": "^1.0.3",
     "express": "~4.14.0",
     "mongoose": "^4.6.6",
     "morgan": "~1.7.0",
-    "node-sass-middleware": "0.9.8",
     "path-to-regexp": "~1.7.0",
     "pug": "~2.0.0-beta6",
-    "serve-favicon": "~2.3.0",
     "showdown": "^1.5.0"
   }
 }
