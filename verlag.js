@@ -2,28 +2,36 @@
   'use strict';
 
   var debug = require('debug')('verlag:server');
+  var path = require('path');
 
-  module.exports = (function(options) {
-    var app, http, mongoose;
-    var server;
-
+  module.exports = (function() {
     var serverDefaults = {
       port: 3000,
       onError: onError,
       onListening: onListening,
-      databaseConnection: 'mongodb://localhost/verlag'
+      databaseConnection: 'mongodb://localhost/verlag',
+
+      viewsPath: 'views',
+      viewEngine: 'pug',
     };
 
     var appDefaults = {
       appTitle: 'verlag',
     };
 
+    var app, http, mongoose;
+    var server, instance;
+
     var serverOptions, appOptions;
+    var extraModules;
 
     function verlag(options) {
-      app = require('./app');
       http = require('http');
       mongoose = require('mongoose');
+
+      app = require('./app');
+
+      mongoose.Promise = global.Promise;
 
       serverOptions = Object.assign({}, serverDefaults);
       appOptions = Object.assign({}, appDefaults);
@@ -38,11 +46,11 @@
     }
 
     verlag.prototype.startServer = function() {
-      mongoose.Promise = global.Promise;
-      mongoose.connect(serverOptions.databaseConnection);
-
-      var db = mongoose.connection;
+      var modules = require('./modules');
       var models = Object.create(null);
+
+      mongoose.connect(serverOptions.databaseConnection);
+      var db = mongoose.connection;
 
       db.on('error', console.error.bind(console, 'connection error:'));
       db.once('open', function() {
@@ -50,7 +58,15 @@
           models[model] = require('./models/' + model)(mongoose);
         });
 
-        var instance = app(appOptions, models);
+        ['markdown', 'menu', 'contact', 'catalog'].forEach(module => {
+          var m = path.join(__dirname, 'verlag_modules', module);
+          require(m)(modules);
+        });
+
+        instance = app(appOptions, modules, models);
+        instance.set('views', path.join(__dirname, serverOptions.viewsPath));
+        instance.set('view engine', serverOptions.viewEngine);
+
         server = http.createServer(instance);
         server.listen(serverOptions.port);
         server.on('error', serverOptions.onError);
@@ -63,18 +79,18 @@
         throw error;
       }
 
-      /*var bind = typeof addr === 'string'
+      var addr = server.address();
+      var bind = typeof addr === 'string'
         ? 'Pipe ' + addr
-        : 'Port ' + addr.port;*/
+        : 'Port ' + addr.port;
 
-      // handle specific listen errors with friendly messages
       switch (error.code) {
         case 'EACCES':
-          //console.error(bind + ' requires elevated privileges');
+          console.error(bind + ' requires elevated privileges');
           process.exit(1);
           break;
         case 'EADDRINUSE':
-          //console.error(bind + ' is already in use');
+          console.error(bind + ' is already in use');
           process.exit(1);
           break;
         default:
@@ -87,9 +103,10 @@
       var bind = typeof addr === 'string'
         ? 'pipe ' + addr
         : 'port ' + addr.port;
+
       debug('Listening on ' + bind);
     }
 
-    return new verlag(options);
+    return verlag;
   })();
 })();

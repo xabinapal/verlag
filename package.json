@@ -1,13 +1,18 @@
 {
   "name": "verlag",
-  "version": "0.0.1-alpha1",
+  "version": "0.0.1",
+  "description": "Web framework for simple publishing house websites",
+  "main": "verlag.js",
   "scripts": {
-    "start": "node ./bin/www"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "http://git.devzero.es/xabito/verlag.git"
+    "url": "http://git.devzero.es/xabinapal/verlag.git"
   },
+  "keywords": [
+    "web", "framework"
+  ],
   "author": "Xabier Napal",
   "license": "MIT",
   "dependencies": {
