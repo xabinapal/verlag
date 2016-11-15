@@ -1,7 +1,7 @@
 ;(function() {
   'use strict';
 
-  var debug = require('debug')('verlag:module');
+  var debug = require('debug')('verlag:modules');
 
   var injected = {};
 
@@ -29,7 +29,7 @@
     modules.push(null);
     (function exec(index) {
       var m = index >= 0 &&  index < modules.length ? modules[index] : null;
-      m !== null && debug('injecting module %s#%s', m.section.module.name, m.section.module.action);
+      m !== null && debug('%s: injecting module %s#%s', req.id, m.section.module.name, m.section.module.action);
       return m === null
         ? next
         : () => m.module(m.section, m.args, req, res, exec(index + 1));

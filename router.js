@@ -41,20 +41,23 @@
     return path;
   }
 
-  Router.prototype.match = function(path) {
-    if (path === undefined || path === null) {
+  Router.prototype.match = function(req) {
+    if (req.path === undefined || req.path === null) {
+      this.id = undefined;
       this.path = undefined;
       this.params = undefined;
       return false;
     }
 
-    var match = this.regexp.exec(path);
+    var match = this.regexp.exec(req.path);
     if (!match) {
+      this.id = undefined;
       this.path = undefined;
       this.params = undefined;
       return false;
     }
 
+    this.id = req.id;
     this.path = match[0];
     this.params = {};
 
@@ -63,7 +66,7 @@
       this.params[key.name] = match[i];
     }
 
-    debug('match found: %s', this.fullPath);
+    debug('%s: match found: %s', req.id, this.fullPath);
     return true;
   }
 
@@ -90,10 +93,10 @@
 
     try {
       var route = this.reverse(params);
-      debug('created route %s from %s', route, this.fullPath);
+      debug('%s: created route %s from %s', this.id, route, this.fullPath);
       return route;
     } catch (err) {
-      debug('can\'t create route from %s with parameters %s', this.fullPath, parameters);
+      debug('%s: can\'t create route from %s with parameters %s', this.id, this.fullPath, parameters);
       return null;
     }
   }

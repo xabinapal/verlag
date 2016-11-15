@@ -3,6 +3,7 @@
 
   var debug = require('debug')('verlag:server');
   var path = require('path');
+  var uuid = require('uuid');
 
   module.exports = (function() {
     var serverDefaults = {
@@ -23,16 +24,15 @@
     };
 
     var app, http, mongoose;
-    var server, instance;
+    var id, server, instance;
 
     var serverOptions, appOptions;
     var extraModules;
 
     function verlag(options) {
+      app = require('./app');
       http = require('http');
       mongoose = require('mongoose');
-
-      app = require('./app');
 
       mongoose.Promise = global.Promise;
 
@@ -49,17 +49,18 @@
     }
 
     verlag.prototype.startServer = function() {
-      debug('starting server...');
+      id = uuid.v4();
+      debug('%s: starting server...', id);
       var modules = require('./modules');
       var models = Object.create(null);
 
-      debug('opening database connection...');
+      debug('%s: opening database connection...', id);
       mongoose.connect(serverOptions.databaseConnection);
       var db = mongoose.connection;
 
-      db.on('error', () => debug('error opening database connection'));
+      db.on('error', () => debug('%s: error opening database connection', id));
       db.once('open', function() {
-        debug('database connection opened');
+        debug('%s: database connection opened', id);
         ['menu', 'page', 'category', 'publication'].forEach(function(model) {
           models[model] = require('./models/' + model)(mongoose);
         });
@@ -71,14 +72,14 @@
 
         instance = app(appOptions, modules, models);
         instance.set('views', serverOptions.viewsPath);
-        debug('setting views path: %s', serverOptions.viewsPath);
+        debug('%s: setting views path: %s', id, serverOptions.viewsPath);
         instance.set('view engine', serverOptions.viewEngine);
-        debug('setting view engine: %s', serverOptions.viewEngine);
+        debug('%s: setting view engine: %s', id, serverOptions.viewEngine);
 
         instance.set('page view', serverOptions.pageView);
-        debug('setting page view: %s', serverOptions.pageView);
+        debug('%s: setting page view: %s', id, serverOptions.pageView);
         instance.set('error view', serverOptions.errorView);
-        debug('setting error view: %s', serverOptions.errorView);
+        debug('%s: setting error view: %s', id, serverOptions.errorView);
 
         server = http.createServer(instance);
         server.listen(serverOptions.port);
@@ -99,11 +100,11 @@
 
       switch (error.code) {
         case 'EACCES':
-          debug(bind + ' requires elevated privileges');
+          debug('%s: %s requires elevated privileges', id, bind);
           process.exit(1);
           break;
         case 'EADDRINUSE':
-          debug(bind + ' is already in use');
+          debug('%s: %s is already in use', id, bind);
           process.exit(1);
           break;
         default:
@@ -117,7 +118,7 @@
         ? 'pipe ' + addr
         : 'port ' + addr.port;
 
-      debug('listening on ' + bind);
+      debug('%s: listening on ' + bind, id);
     }
 
     return verlag;

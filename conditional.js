@@ -10,14 +10,14 @@
         return parameter(route, condition);
 
       default:
-        debug('invalid condition: %s', condition.join(' '));
+        debug('%s: invalid condition: %s', route.id, condition.join(' '));
         return false;
     }
   }
 
   function parameter(route, condition) {
     if (condition.length !== 3) {
-      debug('invalid parameter condition: %s', condition.join(' '));
+      debug('%s: invalid parameter condition: %s', route.id, condition.join(' '));
       return false;
     }
 
@@ -33,11 +33,11 @@
         break;
 
       default:
-        debug('invalid parameter condition: %s', condition.join(' '));
+        debug('%s: invalid parameter condition: %s', route.id, condition.join(' '));
         return false;
     }
 
-    debug('parameter condition result: %s === %s', condition.join(' '), result || false);
+    debug('%s: parameter condition result: %s === %s', route.id, condition.join(' '), result || false);
     return result || false;
   }
 

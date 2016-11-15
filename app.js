@@ -3,11 +3,11 @@
 
   module.exports = function(locals, modules, models) {
     var debug = require('debug')('verlag:app');
+    var uuid = require('uuid');
 
     var express = require('express');
 
     var escapeHtml = require('escape-html');
-    var logger = require('morgan');
     var path = require('path');
 
     var app = express();
@@ -29,20 +29,25 @@
       next();
     });
 
+    app.use(function(req, res, next) {
+      req.id = uuid.v4();
+      next();
+    });
+
     app.get('/robots.txt', function(req, res, next) {
-      debug('processing request: /robots.txt');
+      debug('%s: processing request: /robots.txt', req.id);
       // TODO
       res.end();
     });
 
     app.get('/sitemap.xml', function(req, res, next) {
-      debug('processing request: /sitemap.xml');
+      debug('%s: processing request: /sitemap.xml', req.id);
       // TODO
       res.end();
     });
 
     app.use(function(req, res, next) {
-      debug('processing request: %s', req.path);
+      debug('%s: processing request: %s', req.id, req.path);
 
       res.locals.routes = Object.create({
         menus: undefined,
@@ -67,8 +72,7 @@
           });
         });
 
-        res.locals.routes.current = pages.find(x => x.match(req.path));
-
+        res.locals.routes.current = pages.find(x => x.match(req));
         next();
       });
     });
@@ -101,9 +105,9 @@
       res.locals.ajax = req.headers['X-Requested-With'] === 'XMLHttpRequest';
 
       if (res.locals.ajax) {
-        debug('rendering ajax request %s', req.path);
+        debug('%s: rendering ajax request %s', req.id, req.path);
       } else {
-        debug('rendering request %s', req.path);
+        debug('%s: rendering request %s', req.id, req.path);
       }
 
       res.render('page');
@@ -111,7 +115,7 @@
 
     // error handler
     app.use(function(err, req, res, next) {
-      debug('error processing request %s: %s %s', req.path, err.status, err.message);
+      debug('%s: error processing request %s: %s %s', req.id, req.path, err.status, err.message);
       // set locals, only providing error in development
       res.locals.message = err.message;
       res.locals.error = req.app.get('env') === 'development' ? err : {};
