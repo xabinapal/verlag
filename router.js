@@ -1,6 +1,8 @@
 ;(function() {
   'use strict';
 
+  var debug = require('debug')('verlag:router');
+
   var pathToRegexp = require('path-to-regexp');
   var conditional = require('./conditional');
 
@@ -61,6 +63,7 @@
       this.params[key.name] = match[i];
     }
 
+    debug('match found: %s', this.fullPath);
     return true;
   }
 
@@ -87,8 +90,10 @@
 
     try {
       var route = this.reverse(params);
+      debug('created route %s from %s', route, this.fullPath);
       return route;
     } catch (err) {
+      debug('can\'t create route from %s with parameters %s', this.fullPath, parameters);
       return null;
     }
   }

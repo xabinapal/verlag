@@ -2,6 +2,8 @@
   'use strict';
 
   module.exports = function(locals, modules, models) {
+    var debug = require('debug')('verlag:app');
+
     var express = require('express');
 
     var escapeHtml = require('escape-html');
@@ -28,16 +30,20 @@
     });
 
     app.get('/robots.txt', function(req, res, next) {
+      debug('processing request: /robots.txt');
       // TODO
       res.end();
     });
 
     app.get('/sitemap.xml', function(req, res, next) {
+      debug('processing request: /sitemap.xml');
       // TODO
       res.end();
     });
 
     app.use(function(req, res, next) {
+      debug('processing request: %s', req.path);
+
       res.locals.routes = Object.create({
         menus: undefined,
         current: undefined
@@ -93,16 +99,23 @@
 
     app.use(function(req, res, next) {
       res.locals.ajax = req.headers['X-Requested-With'] === 'XMLHttpRequest';
+
+      if (res.locals.ajax) {
+        debug('rendering ajax request %s', req.path);
+      } else {
+        debug('rendering request %s', req.path);
+      }
+
       res.render('page');
     });
 
     // error handler
     app.use(function(err, req, res, next) {
+      debug('error processing request %s: %s %s', req.path, err.status, err.message);
       // set locals, only providing error in development
       res.locals.message = err.message;
       res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-      // render the error page
       res.status(err.status || 500);
       res.render('error');
     });

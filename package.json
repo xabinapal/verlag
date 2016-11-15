@@ -1,6 +1,6 @@
 {
   "name": "verlag",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Web framework for simple publishing house websites",
   "main": "verlag.js",
   "scripts": {
@@ -11,7 +11,8 @@
     "url": "http://git.devzero.es/xabinapal/verlag.git"
   },
   "keywords": [
-    "web", "framework"
+    "web",
+    "framework"
   ],
   "author": "Xabier Napal",
   "license": "MIT",

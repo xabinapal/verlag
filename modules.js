@@ -1,6 +1,8 @@
 ;(function() {
   'use strict';
 
+  var debug = require('debug')('verlag:module');
+
   var injected = {};
 
   module.exports.create = function(name, actions) {
@@ -18,15 +20,16 @@
         var module = section.module;
         var args = module.args.reduce((dict, arg) => (dict[arg.key] = arg.value) && dict, {});
         return {
+          module: injected[module.name][module.action],
           section: section,
-          args: args,
-          module: injected[module.name][module.action]
+          args: args
         };
       });
 
     modules.push(null);
     (function exec(index) {
       var m = index >= 0 &&  index < modules.length ? modules[index] : null;
+      m !== null && debug('injecting module %s#%s', m.section.module.name, m.section.module.action);
       return m === null
         ? next
         : () => m.module(m.section, m.args, req, res, exec(index + 1));

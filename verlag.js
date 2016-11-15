@@ -13,6 +13,9 @@
 
       viewsPath: undefined,
       viewEngine: 'pug',
+
+      pageView: 'page',
+      errorView: 'error'
     };
 
     var appDefaults = {
@@ -46,14 +49,17 @@
     }
 
     verlag.prototype.startServer = function() {
+      debug('starting server...');
       var modules = require('./modules');
       var models = Object.create(null);
 
+      debug('opening database connection...');
       mongoose.connect(serverOptions.databaseConnection);
       var db = mongoose.connection;
 
-      db.on('error', console.error.bind(console, 'connection error:'));
+      db.on('error', () => debug('error opening database connection'));
       db.once('open', function() {
+        debug('database connection opened');
         ['menu', 'page', 'category', 'publication'].forEach(function(model) {
           models[model] = require('./models/' + model)(mongoose);
         });
@@ -65,7 +71,14 @@
 
         instance = app(appOptions, modules, models);
         instance.set('views', serverOptions.viewsPath);
+        debug('setting views path: %s', serverOptions.viewsPath);
         instance.set('view engine', serverOptions.viewEngine);
+        debug('setting view engine: %s', serverOptions.viewEngine);
+
+        instance.set('page view', serverOptions.pageView);
+        debug('setting page view: %s', serverOptions.pageView);
+        instance.set('error view', serverOptions.errorView);
+        debug('setting error view: %s', serverOptions.errorView);
 
         server = http.createServer(instance);
         server.listen(serverOptions.port);
@@ -81,16 +94,16 @@
 
       var addr = server.address();
       var bind = typeof addr === 'string'
-        ? 'Pipe ' + addr
-        : 'Port ' + addr.port;
+        ? 'pipe ' + addr
+        : 'port ' + addr.port;
 
       switch (error.code) {
         case 'EACCES':
-          console.error(bind + ' requires elevated privileges');
+          debug(bind + ' requires elevated privileges');
           process.exit(1);
           break;
         case 'EADDRINUSE':
-          console.error(bind + ' is already in use');
+          debug(bind + ' is already in use');
           process.exit(1);
           break;
         default:
@@ -104,7 +117,7 @@
         ? 'pipe ' + addr
         : 'port ' + addr.port;
 
-      debug('Listening on ' + bind);
+      debug('listening on ' + bind);
     }
 
     return verlag;
