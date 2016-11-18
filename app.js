@@ -31,7 +31,7 @@
       req.id = uuid.v4();
       req.models = models;
       res.locals.modules = Object.create({});
-      Object.keys(modules).forEach(m => res.locals.modules[m] = Object.create({}));
+      modules.list().forEach(m => res.locals.modules[m] = Object.create({}));
       next();
     });
 

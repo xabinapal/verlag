@@ -19,15 +19,19 @@
   function send(section, args, req, res, next) {
     let subject = args.subject;
 
-    Object.keys(req.body)
+    let formKeys = Object.keys(req.body)
       .filter(key => key.startsWith(args.prefix))
-      .forEach(key => {
+      .reduce((dict, key) => {
         let k = key.slice(args.prefix.length);
-        subject = subject.replace('{' + k + '}', req.body[key]);
-      });
+        dict[k] = req.body[key];
+        return dict;
+      }, {});
+
+    Object.keys(formKeys)
+      .forEach(key => subject = subject.replace('{' + key + '}', formKeys[key]));
 
     let view = req.app.get('view getter')(args.view);
-    let content = pug.renderFile(view);
+    let content = pug.renderFile(view, formKeys);
 
     let transporter = nodemailer.createTransport();
     transporter.use('compile', htmlToText());
@@ -39,12 +43,13 @@
       to: args.to,
       subject: subject,
       html: content
-    }, function(err) {
-      if (error) {
+    }, function(err, info) {
+      if (err) {
         debug('%s: can\' send mail: %s', req.id, error);
       } else {
         debug('%s: mail sent: %s', req.id, info.response)
       }
+
       res.locals.modules.mailer.status = err;
       next();
     })
