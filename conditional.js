@@ -4,25 +4,62 @@
   var debug = require('debug')('verlag:conditional');
 
   function conditional(route, condition) {
-    condition = condition.split(/\s+/);
-    switch (condition[0]) {
+    let result;
+    let split = condition.split(/\s+/);
+
+    switch (split[0]) {
+      case 'path':
+        result = path(route, split);
+        break;
+
       case 'parameter':
-        return parameter(route, condition);
+        result = parameter(route, split);
+        break;
 
       default:
-        debug('%s: invalid condition: %s', route.id, condition.join(' '));
+        debug('%s: invalid condition: %s', route.id, condition);
         return false;
     }
+  
+    if (result === null) {
+      debug('%s: invalid %s condition: %s', route.id, split[0], condition);
+      return false;
+    }
+
+    debug('%s: %s condition result: %s === %s', route.id, split[0], condition, result);
+    return result;
+  }
+
+  function path(route, condition) {
+    if (condition.length !== 3) {
+      return null;
+    }
+
+    let result;
+    let set = route.isOptionalPathSet(condition[1]);
+    switch (condition[2]) {
+      case 'set':
+        result = set;
+        break;
+
+      case 'unset':
+        result = !set;
+        break;
+
+      default:
+        return null;
+    }
+
+    return result || false;
   }
 
   function parameter(route, condition) {
     if (condition.length !== 3) {
-      debug('%s: invalid parameter condition: %s', route.id, condition.join(' '));
-      return false;
+      return null;
     }
 
-    var set = route.getParameterValue(condition[1]);
-    var result;
+    let result;
+    let set = route.getParameterValue(condition[1]);
     switch (condition[2]) {
       case 'set':
         result = set && set.length > 0;
@@ -33,11 +70,9 @@
         break;
 
       default:
-        debug('%s: invalid parameter condition: %s', route.id, condition.join(' '));
-        return false;
+        return null;
     }
 
-    debug('%s: parameter condition result: %s === %s', route.id, condition.join(' '), result || false);
     return result || false;
   }
 

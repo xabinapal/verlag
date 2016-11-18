@@ -45,7 +45,8 @@
     if (req.path === undefined || req.path === null) {
       this.id = undefined;
       this.path = undefined;
-      this.params = undefined;
+      this.parameters = undefined;
+      this.optionalPath = undefined;
       return false;
     }
 
@@ -53,17 +54,24 @@
     if (!match) {
       this.id = undefined;
       this.path = undefined;
-      this.params = undefined;
+      this.parameters = undefined;
+      this.optionalPath = undefined;
       return false;
     }
 
     this.id = req.id;
     this.path = match[0];
-    this.params = {};
+    this.parameters = {};
+    this.optionalPath = {}
 
-    for (var i = 1; i < match.length; match++) {
-      var key = this.keys[i - 1];
-      this.params[key.name] = match[i];
+    match = match.slice(1);
+    for (var i = 0; i < match.length; i++) {
+      let key = this.keys[i];
+      if (key.prefix === '/') {
+        this.parameters[key.name] = match[i];
+      } else {
+        this.optionalPath[key.name] = match[i];
+      }
     }
 
     debug('%s: match found: %s', req.id, this.fullPath);
@@ -76,14 +84,15 @@
   }
 
   Router.prototype.getParameterValue = function(key) {
-    console.log(this.params, this.basePath, this.fullPath);
-    console.log( this.regexp);
-    console.log(this.keys);
-    return key && this.params[key] || undefined;
+    return key && this.parameters[key] || undefined;
   }
 
-  Router.prototype.hasParameter = function(type) {
-    return this.getParameterValue(type) !== undefined;
+  Router.prototype.hasParameter = function(key) {
+    return this.getParameterValue(key) !== undefined;
+  }
+
+  Router.prototype.isOptionalPathSet = function(key) {
+    return this.optionalPath[key] !== undefined;
   }
 
   Router.prototype.evaluateCondition = function(condition) {
@@ -91,10 +100,10 @@
   }
 
   Router.prototype.create = function(parameters) {
-    var params = parameters
-      .reduce((dict, val) => (dict[val.key] = val.value) && dict, {});
-
     try {
+      let params = parameters
+        .reduce((dict, val) => (dict[val.key] = val.value) && dict, {});
+
       var route = this.reverse(params);
       debug('%s: created route %s from %s', this.id, route, this.fullPath);
       return route;
