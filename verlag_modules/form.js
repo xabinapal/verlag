@@ -1,16 +1,14 @@
 ;(function() {
   'use strict';
 
-  const name = 'menu';
+  const name = 'form';
   const actions = [show];
 
   const pug = require('pug');
 
   function show(section, args, req, res, next) {
     let view = req.app.get('view getter')(args.view);
-    section.content = pug.renderFile(view, {
-      menu: res.locals.routes.menus[args.menu]
-    });
+    section.content = pug.renderFile(view);
     next();
   }
 

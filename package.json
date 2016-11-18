@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "http://git.devzero.es/xabinapal/verlag.git"
+    "url": "git+https://xabinapal@github.com/xabinapal/verlag.git"
   },
   "keywords": [
     "web",
@@ -16,13 +16,20 @@
   ],
   "author": "Xabier Napal",
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xabinapal/verlag/issues"
+  },
+  "homepage": "https://github.com/xabinapal/verlag#readme",
   "dependencies": {
     "async": "^2.1.2",
+    "body-parser": "^1.15.2",
     "debug": "~2.2.0",
     "escape-html": "^1.0.3",
     "express": "~4.14.0",
     "mongoose": "^4.6.6",
     "morgan": "~1.7.0",
+    "nodemailer": "^2.6.4",
+    "nodemailer-html-to-text": "^2.1.0",
     "path-to-regexp": "~1.7.0",
     "pug": "~2.0.0-beta6",
     "showdown": "^1.5.0",

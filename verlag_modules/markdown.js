@@ -4,7 +4,7 @@
   const name = 'markdown';
   const actions = [parse];
 
-  var showdown = require('showdown');
+  const showdown = require('showdown');
   
   function parse(section, args, req, res, next) {
     section.content = new showdown.Converter().makeHtml(section.content);

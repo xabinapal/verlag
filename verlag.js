@@ -65,7 +65,7 @@
           models[model] = require('./models/' + model)(mongoose);
         });
 
-        ['markdown', 'menu', 'contact', 'catalog'].forEach(module => {
+        ['markdown', 'form', 'mailer', 'menu', 'catalog'].forEach(module => {
           var m = path.join(__dirname, 'verlag_modules', module);
           require(m)(modules);
         });

@@ -5,12 +5,17 @@
 
   var injected = {};
 
+
   module.exports.create = function(name, actions) {
     injected[name] = actions.reduce((dict, action) => (dict[action.name] = action) && dict, {});
   }
 
   module.exports.get = function(module) {
     return injected[module];
+  }
+
+  module.exports.list = function() {
+    return Object.keys(injected);
   }
 
   module.exports.inject = function(req, res, next) {

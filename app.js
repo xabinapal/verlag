@@ -2,19 +2,19 @@
   'use strict';
 
   module.exports = function(locals, modules, models) {
-    var debug = require('debug')('verlag:app');
-    var uuid = require('uuid');
+    const debug = require('debug')('verlag:app');
+    const uuid = require('uuid');
 
-    var express = require('express');
+    const bodyParser = require('body-parser');
+    const escapeHtml = require('escape-html');
+    const express = require('express');
+    const path = require('path');
 
-    var escapeHtml = require('escape-html');
-    var path = require('path');
-
-    var app = express();
+    const app = express();
     app.locals = locals;
 
-    var Menu = require('./menu');
-    var Router = require('./router');
+    const Menu = require('./menu');
+    const Router = require('./router');
 
     app.set('view getter', function(view) {
       view = path.join(app.get('views'), view);
@@ -24,13 +24,14 @@
 
     app.disable('x-powered-by');
 
-    app.use(function(req, res, next) {
-      req.models = models;
-      next();
-    });
+    app.use(bodyParser.json());
+    app.use(bodyParser.urlencoded({ extended: false }));
 
     app.use(function(req, res, next) {
       req.id = uuid.v4();
+      req.models = models;
+      res.locals.modules = Object.create({});
+      Object.keys(modules).forEach(m => res.locals.modules[m] = Object.create({}));
       next();
     });
 

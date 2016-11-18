@@ -22,19 +22,19 @@
   }
 
   Router.getBasePath = function(page) {
-    var path = page.path || '/';
+    var path = page.basePath || '/';
     path[0] != '/' && (path = '/' + path);
     path = path.replace(/([^\/])\/+$/g, '$1');
     return path;
   }
 
   Router.getFullPath = function(page, path) {
-    page.parameters && page.parameters
+    page.path && page.path
       .slice()
       .sort((a, b) => a.position - b.position)
-      .forEach(function(parameter) {
-        path += '/:' + parameter.key;
-        parameter.optional && (path += '?');
+      .forEach(function(key) {
+        path += key.parameter ? '/:' + key.key : '(/' + key.key + ')';
+        key.optional && (path += '?');
       });
 
     path.endsWith('/') && (path = path.slice(0, -1));
@@ -76,6 +76,9 @@
   }
 
   Router.prototype.getParameterValue = function(key) {
+    console.log(this.params, this.basePath, this.fullPath);
+    console.log( this.regexp);
+    console.log(this.keys);
     return key && this.params[key] || undefined;
   }
 
