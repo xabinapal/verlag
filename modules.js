@@ -1,31 +1,31 @@
 ;(function() {
   'use strict';
 
-  var debug = require('debug')('verlag:modules');
+  const debug = require('debug')('verlag:modules');
 
-  var injected = {};
+  let injected = new Map();
 
-
-  module.exports.create = function(name, actions) {
-    injected[name] = actions.reduce((dict, action) => (dict[action.name] = action) && dict, {});
+  module.exports.create = (name, actions) => {
+    let moduleActions = actions.reduce((map, action) => map.set(action.name, action), new Map());
+    injected.set(name, moduleActions);
   }
 
-  module.exports.get = function(module) {
+  module.exports.get = module => {
     return injected[module];
   }
 
-  module.exports.list = function() {
-    return Object.keys(injected);
+  module.exports.list = () => {
+    return [...injected.keys()];
   }
 
-  module.exports.inject = function(req, res, next) {
-    var modules = (res.locals.routes.current.page.content || [])
+  module.exports.inject = (req, res, next) => {
+    let modules = (res.locals.routes.current.page.content || [])
       .filter(section => section.module)
       .map(section => {
-        var module = section.module;
-        var args = module.args.reduce((dict, arg) => (dict[arg.key] = arg.value) && dict, {});
+        let module = section.module;
+        let args = module.args.reduce((map, arg) => map.set(arg.key, arg.value), new Map());
         return {
-          module: injected[module.name][module.action],
+          module: injected.get(module.name).get(module.action),
           section: section,
           args: args
         };
@@ -33,7 +33,7 @@
 
     modules.push(null);
     (function exec(index) {
-      var m = index >= 0 &&  index < modules.length ? modules[index] : null;
+      var m = index < modules.length ? modules[index] : null;
       m !== null && debug('%s: injecting module %s#%s', req.id, m.section.module.name, m.section.module.action);
       return m === null
         ? next

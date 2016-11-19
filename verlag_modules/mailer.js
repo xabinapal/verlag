@@ -10,27 +10,16 @@
   const htmlToText = require('nodemailer-html-to-text').htmlToText;
   const pug = require('pug');
 
-  function form(section, args, req, res, next) {
-    let view = req.app.get('view getter')(args.view);
-    section.content = pug.renderFile(view);
-    next();
-  }
-
   function send(section, args, req, res, next) {
-    let subject = args.subject;
+    let subject = args.get('subject');
 
     let formKeys = Object.keys(req.body)
-      .filter(key => key.startsWith(args.prefix))
-      .reduce((dict, key) => {
-        let k = key.slice(args.prefix.length);
-        dict[k] = req.body[key];
-        return dict;
-      }, {});
+      .filter(key => key.startsWith(args.get('prefix')))
+      .reduce((map, key) => map.set(key.slice(args.get('prefix').length), req.body[key]), new Map());
 
-    Object.keys(formKeys)
-      .forEach(key => subject = subject.replace('{' + key + '}', formKeys[key]));
+    formKeys.forEach((key, value) => subject = subject.replace('{' + key + '}', value));
 
-    let view = req.app.get('view getter')(args.view);
+    let view = req.app.get('view getter')(args.get('view'));
     let content = pug.renderFile(view, formKeys);
 
     let transporter = nodemailer.createTransport();
@@ -39,18 +28,18 @@
     debug('sending mail...');
 
     transporter.sendMail({
-      from: args.from,
-      to: args.to,
+      from: args.get('from'),
+      to: args.get('to'),
       subject: subject,
       html: content
     }, function(err, info) {
       if (err) {
-        debug('%s: can\' send mail: %s', req.id, error);
+        debug('%s: can\'t send mail: %s', req.id, err);
       } else {
         debug('%s: mail sent: %s', req.id, info.response)
       }
 
-      res.locals.modules.mailer.status = err;
+      res.locals.modules.get('mailer').set('status', err);
       next();
     })
   }

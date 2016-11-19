@@ -1,9 +1,9 @@
 ;(function() {
   'use strict';
 
-  var debug = require('debug')('verlag:server');
-  var path = require('path');
-  var uuid = require('uuid');
+  const debug = require('debug')('verlag:server');
+  const path = require('path');
+  const uuid = require('uuid');
 
   module.exports = (function() {
     var serverDefaults = {

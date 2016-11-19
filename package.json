@@ -1,6 +1,6 @@
 {
   "name": "verlag",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Web framework for simple publishing house websites",
   "main": "verlag.js",
   "scripts": {

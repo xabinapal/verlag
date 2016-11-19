@@ -1,9 +1,9 @@
 ;(function() {
   'use strict';
 
-  var debug = require('debug')('verlag:conditional');
+  const debug = require('debug')('verlag:conditional');
 
-  function conditional(route, condition) {
+  module.exports = (route, condition) => {
     let result;
     let split = condition.split(/\s+/);
 
@@ -28,7 +28,7 @@
 
     debug('%s: %s condition result: %s === %s', route.id, split[0], condition, result);
     return result;
-  }
+  };
 
   function path(route, condition) {
     if (condition.length !== 3) {
@@ -75,6 +75,4 @@
 
     return result || false;
   }
-
-  module.exports = conditional;
 })();

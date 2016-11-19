@@ -1,10 +1,10 @@
 ;(function() {
   'use strict';
 
-  var debug = require('debug')('verlag:router');
+  const debug = require('debug')('verlag:router');
 
-  var pathToRegexp = require('path-to-regexp');
-  var conditional = require('./conditional');
+  const pathToRegexp = require('path-to-regexp');
+  const conditional = require('./conditional');
 
   function Router(page) {
     if (!(this instanceof Router)) {
@@ -32,7 +32,7 @@
     page.path && page.path
       .slice()
       .sort((a, b) => a.position - b.position)
-      .forEach(function(key) {
+      .forEach(key => {
         path += key.parameter ? '/:' + key.key : '(/' + key.key + ')';
         key.optional && (path += '?');
       });
@@ -61,16 +61,16 @@
 
     this.id = req.id;
     this.path = match[0];
-    this.parameters = {};
-    this.optionalPath = {}
+    this.parameters = new Map();
+    this.optionalPath = new Map();
 
     match = match.slice(1);
     for (var i = 0; i < match.length; i++) {
       let key = this.keys[i];
       if (key.prefix === '/') {
-        this.parameters[key.name] = match[i];
+        this.parameters.set(key.name.toString(), match[i]);
       } else {
-        this.optionalPath[key.name] = match[i];
+        this.optionalPath.set(key.name.toString(), match[i]);
       }
     }
 
@@ -78,13 +78,8 @@
     return true;
   }
 
-  Router.prototype.getParameterKey = function(type) {
-    var param = this.page.parameters.find(x => x.type === type);
-    return param.key;
-  }
-
   Router.prototype.getParameterValue = function(key) {
-    return key && this.parameters[key] || undefined;
+    return key && this.parameters.get(key) || undefined;
   }
 
   Router.prototype.hasParameter = function(key) {
@@ -92,7 +87,7 @@
   }
 
   Router.prototype.isOptionalPathSet = function(key) {
-    return this.optionalPath[key] !== undefined;
+    return key && this.optionalPath.get(key) !== undefined;
   }
 
   Router.prototype.evaluateCondition = function(condition) {
@@ -100,11 +95,10 @@
   }
 
   Router.prototype.create = function(parameters) {
-    try {
-      let params = parameters
-        .reduce((dict, val) => (dict[val.key] = val.value) && dict, {});
+    let params = parameters.reduce((obj, val) => (obj[val.key] = val.value) && obj, Object.create(null));
 
-      var route = this.reverse(params);
+    try {
+      let route = this.reverse(params);
       debug('%s: created route %s from %s', this.id, route, this.fullPath);
       return route;
     } catch (err) {

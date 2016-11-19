@@ -8,12 +8,13 @@
 
     this.menu = menu;
     this.pages = new Set();
-    this.data = {}
+    this.data = new Map();
   }
 
   Menu.prototype.addPage = function(route) {
+    let page = route.page.menus.find(p => p.menu.equals(this.menu._id));
     this.pages.add(route);
-    this.data[route.page._id] = route.page.menus.find(p => p.menu.equals(this.menu._id));
+    this.data.set(route.page._id.toHexString(), page);
   }
 
   Menu.prototype.getPages = function() {
@@ -23,11 +24,11 @@
   }
 
   Menu.prototype.getPageData = function(route) {
-    return this.data[route.page._id];
+    return this.data.get(route.page._id.toHexString());
   }
 
   Menu.prototype.getPageTitle = function(route) {
-    return this.data[route.page._id].title || route.page.title;
+    return this.getPageData(route).title || route.page.title;
   }
 
   module.exports = Menu;
