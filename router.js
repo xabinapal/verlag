@@ -1,47 +1,49 @@
-;(function() {
-  'use strict';
+'use strict';
 
-  const debug = require('debug')('verlag:router');
+const debug = require('debug')('verlag:router');
 
-  const pathToRegexp = require('path-to-regexp');
-  const conditional = require('./conditional');
+const pathToRegexp = require('path-to-regexp');
+const conditional = require('./conditional');
 
-  function Router(page) {
-    if (!(this instanceof Router)) {
-      return new Router(page);
-    }
-
+class Router {
+  constructor(page) {
     this.page = page;
-
-    this.basePath = Router.getBasePath(page);
-    this.fullPath = Router.getFullPath(page, this.basePath);
 
     this.keys = [];
     this.regexp = pathToRegexp(this.fullPath, this.keys);
     this.reverse = pathToRegexp.compile(this.fullPath);
   }
 
-  Router.getBasePath = function(page) {
-    var path = page.basePath || '/';
-    path[0] != '/' && (path = '/' + path);
-    path = path.replace(/([^\/])\/+$/g, '$1');
-    return path;
+  get basePath() {
+    if (this._basePath !== undefined) {
+      return this._basePath;
+    }
+
+    this._basePath = this.page.basePath || '/';
+    this._basePath[0] != '/' && (this._basePath = '/' + this._basePath);
+    this._basePath = this._basePath.replace(/([^\/])\/+$/g, '$1');
+    return this._basePath;
   }
 
-  Router.getFullPath = function(page, path) {
-    page.path && page.path
+  get fullPath() {
+    if (this._fullPath !== undefined) {
+      return this._fullPath;
+    }
+
+    this._fullPath = this.basePath;
+    this.page.path && this.page.path
       .slice()
       .sort((a, b) => a.position - b.position)
-      .forEach(key => {
-        path += key.parameter ? '/:' + key.key : '(/' + key.key + ')';
-        key.optional && (path += '?');
+        .forEach(key => {
+        this._fullPath += key.parameter ? '/:' + key.key : '(/' + key.key + ')';
+        key.optional && (this._fullPath += '?');
       });
 
-    path.endsWith('/') && (path = path.slice(0, -1));
-    return path;
+    this._fullPath = this._fullPath.replace(/\/+$/, '');
+    return this._fullPath;
   }
 
-  Router.prototype.match = function(req) {
+  match(req) {
     if (req.path === undefined || req.path === null) {
       this.id = undefined;
       this.path = undefined;
@@ -78,23 +80,7 @@
     return true;
   }
 
-  Router.prototype.getParameterValue = function(key) {
-    return key && this.parameters.get(key) || undefined;
-  }
-
-  Router.prototype.hasParameter = function(key) {
-    return this.getParameterValue(key) !== undefined;
-  }
-
-  Router.prototype.isOptionalPathSet = function(key) {
-    return key && this.optionalPath.get(key) !== undefined;
-  }
-
-  Router.prototype.evaluateCondition = function(condition) {
-    return conditional(this, condition);
-  }
-
-  Router.prototype.create = function(parameters) {
+  create(parameters) {
     let params = parameters.reduce((obj, val) => (obj[val.key] = val.value) && obj, Object.create(null));
 
     try {
@@ -107,5 +93,21 @@
     }
   }
 
-  module.exports = Router;
-})();
+  getParameter(key) {
+    return key && this.parameters.get(key) || undefined;
+  }
+
+  hasParameter(key) {
+    return this.hasParameter(key) !== undefined;
+  }
+
+  evaluateCondition(condition) {
+    return conditional(this, condition);
+  }
+
+  isOptionalPathSet(key) {
+    return key && this.optionalPath.get(key) !== undefined;
+  }
+}
+
+module.exports = Router;

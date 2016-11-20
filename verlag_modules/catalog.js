@@ -21,7 +21,7 @@
 
   function publications(section, args, req, res, next) {
     let view = req.app.get('view getter')(args.get('view'));
-    req.models.category.getByPath(res.locals.routes.current.getParameterValue('category'))
+    req.models.category.getByPath(res.locals.routes.current.getParameter('category'))
       .then(category => {
         section.title = section.title.replace(args.get('replace'), category.get('name'));
         section.category = category;

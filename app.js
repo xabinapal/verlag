@@ -57,7 +57,7 @@
 
       models.menu.getAll().then(menus => {
         res.locals.routes.menus = menus
-          .map(Menu)
+          .map(menu => new Menu(menu))
           .reduce((map, menu) => map.set(menu.menu.key, menu), new Map());
 
         return models.page.getAll();
@@ -65,7 +65,7 @@
         let menus = [...res.locals.routes.menus.values()]
           .reduce((map, menu) => map.set(menu.menu._id.toHexString(), menu), new Map());
 
-        pages = pages.map(Router);
+        pages = pages.map(page => new Router(page));
         pages.forEach(page => {
           page.page.menus.forEach(menu => menus.get(menu.menu.toHexString()).addPage(page));
         });

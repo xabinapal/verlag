@@ -59,7 +59,7 @@
     }
 
     let result;
-    let set = route.getParameterValue(condition[1]);
+    let set = route.getParameter(condition[1]);
     switch (condition[2]) {
       case 'set':
         result = set && set.length > 0;
