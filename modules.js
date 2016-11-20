@@ -1,8 +1,6 @@
 ;(function() {
   'use strict';
 
-  const debug = require('debug')('verlag:modules');
-
   let injected = new Map();
 
   module.exports.create = (name, actions) => {
@@ -20,16 +18,19 @@
 
   module.exports.inject = (req, res, next) => {
     let modules = (res.locals.routes.current.page.content || [])
-      .filter(section => section.module)
+      .filter(section => section.modules.length)
       .map(section => {
-        let module = section.module;
-        let args = module.args.reduce((map, arg) => map.set(arg.key, arg.value), new Map());
-        return {
-          module: injected.get(module.name).get(module.action),
-          section: section,
-          args: args
-        };
-      });
+        return section.modules.map(module => {
+          let args = module.args.reduce((map, arg) => map.set(arg.key, arg.value), new Map());
+          return {
+            module: injected.get(module.name).get(module.action),
+            name: module.name,
+            action: module.action,
+            section: section,
+            args: args
+          };
+        });
+      }).reduce((a, b) => a.concat(b), []);
 
     modules.push(null);
     (function exec(index) {
@@ -37,7 +38,7 @@
       m !== null && debug('%s: injecting module %s#%s', req.id, m.section.module.name, m.section.module.action);
       return m === null
         ? next
-        : () => m.module(m.section, m.args, req, res, exec(index + 1));
+        : err => err && next(err) || m.module(m.section, m.args, req, res, exec(index + 1));
     })(0)();
   }
 })();
