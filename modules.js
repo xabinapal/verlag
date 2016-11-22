@@ -17,6 +17,8 @@
   }
 
   module.exports.inject = (req, res, next) => {
+    let logger = req.logger.create('modules');
+
     let modules = (res.locals.routes.current.page.content || [])
       .filter(section => section.modules.length)
       .map(section => {
@@ -35,10 +37,10 @@
     modules.push(null);
     (function exec(index) {
       var m = index < modules.length ? modules[index] : null;
-      m !== null && debug('%s: injecting module %s#%s', req.id, m.section.module.name, m.section.module.action);
+      m !== null && logger.log(logger.debug, 'injecting module {0}.{1}', m.name, m.action);
       return m === null
         ? next
-        : err => err && next(err) || m.module(m.section, m.args, req, res, exec(index + 1));
+        : err => err && next(err) || m.module(m.section, m.args, logger.create(m.name), req, res, exec(index + 1));
     })(0)();
   }
 })();

@@ -1,9 +1,8 @@
 ;(function() {
   'use strict';
 
-  module.exports = (locals, modules, models) => {
-    const debug = require('debug')('verlag:app');
-    const uuid = require('uuid');
+  module.exports = (locals, logger, modules, models) => {
+    let appLogger = logger.create('app', true);
 
     const bodyParser = require('body-parser');
     const escapeHtml = require('escape-html');
@@ -24,11 +23,14 @@
 
     app.disable('x-powered-by');
 
+    //app.use(logger.requestLogger);
+    //app.use(logger.responseLogger);
+
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
 
     app.use((req, res, next) => {
-      req.id = uuid.v4();
+      req.logger = logger;
       req.models = models;
       res.locals.modules = new Map();
       modules.list().forEach(m => res.locals.modules.set(m, new Map()));
@@ -36,19 +38,19 @@
     });
 
     app.get('/robots.txt', (req, res, next) => {
-      debug('%s: processing request: /robots.txt', req.id);
+      appLogger.log(appLogger.info, 'processing request: /robots.txt');
       // TODO
       res.end();
     });
 
     app.get('/sitemap.xml', (req, res, next) => {
-      debug('%s: processing request: /sitemap.xml', req.id);
+      appLogger.log(appLogger.info, 'processing request: /sitemap.xml');
       // TODO
       res.end();
     });
 
     app.use((req, res, next) => {
-      debug('%s: processing request: %s', req.id, req.path);
+      appLogger.log(appLogger.info, 'processing request: {0}', req.path);
 
       res.locals.routes = Object.create({
         menus: undefined,
@@ -77,6 +79,7 @@
 
     app.use((req, res, next) => {
       let route = res.locals.routes.current;
+
       if (route) {
         route.page.getData().then(page => {
           let content = page.content.map(section => {
@@ -103,18 +106,16 @@
       res.locals.ajax = req.headers['X-Requested-With'] === 'XMLHttpRequest';
 
       if (res.locals.ajax) {
-        debug('%s: rendering ajax request %s', req.id, req.path);
+        appLogger.log(appLogger.info, 'rendering ajax request {0}', req.path);
       } else {
-        debug('%s: rendering request %s', req.id, req.path);
+        appLogger.log(appLogger.info, 'rendering request {0}', req.path);
       }
 
       res.render('page');
     });
 
-    // error handler
     app.use((err, req, res, next) => {
-      debug('%s: error processing request %s: %s %s', req.id, req.path, err.status, err.message);
-      // set locals, only providing error in development
+      appLogger.log(appLogger.warn, 'error processing request {0}: {1} {2}', req.path, err.status, err.message);
       res.locals.message = err.message;
       res.locals.error = req.app.get('env') === 'development' ? err : {};
 

@@ -1,6 +1,4 @@
-'use strict';
-
-const debug = require('debug')('verlag:router');
+;'use strict';
 
 const pathToRegexp = require('path-to-regexp');
 const conditional = require('./conditional');
@@ -20,7 +18,7 @@ class Router {
     }
 
     this._basePath = this.page.basePath || '/';
-    this._basePath[0] != '/' && (this._basePath = '/' + this._basePath);
+    this._basePath[0] != '/' && (this._basePath = `/${this._basePath}`);
     this._basePath = this._basePath.replace(/([^\/])\/+$/g, '$1');
     return this._basePath;
   }
@@ -35,7 +33,7 @@ class Router {
       .slice()
       .sort((a, b) => a.position - b.position)
         .forEach(key => {
-        this._fullPath += key.parameter ? '/:' + key.key : '(/' + key.key + ')';
+        this._fullPath += key.parameter ? `/:${key.key}` : `(/${key.key})`;
         key.optional && (this._fullPath += '?');
       });
 
@@ -44,30 +42,29 @@ class Router {
   }
 
   match(req) {
+    this.logger = req.logger.create('router');
+
     if (req.path === undefined || req.path === null) {
-      this.id = undefined;
       this.path = undefined;
       this.parameters = undefined;
       this.optionalPath = undefined;
       return false;
     }
 
-    var match = this.regexp.exec(req.path);
+    let match = this.regexp.exec(req.path);
     if (!match) {
-      this.id = undefined;
       this.path = undefined;
       this.parameters = undefined;
       this.optionalPath = undefined;
       return false;
     }
 
-    this.id = req.id;
     this.path = match[0];
     this.parameters = new Map();
     this.optionalPath = new Map();
 
     match = match.slice(1);
-    for (var i = 0; i < match.length; i++) {
+    for (let i = 0; i < match.length; i++) {
       let key = this.keys[i];
       if (key.prefix === '/') {
         this.parameters.set(key.name.toString(), match[i]);
@@ -76,7 +73,7 @@ class Router {
       }
     }
 
-    debug('%s: match found: %s', req.id, this.fullPath);
+    this.logger.log(this.logger.info, 'match found: {0}', this.fullPath);
     return true;
   }
 
@@ -85,10 +82,10 @@ class Router {
 
     try {
       let route = this.reverse(params);
-      debug('%s: created route %s from %s', this.id, route, this.fullPath);
+      this.logger.log(this.logger.debug, 'created route {0} from {1}', route, this.fullPath);
       return route;
     } catch (err) {
-      debug('%s: can\'t create route from %s with parameters %s', this.id, this.fullPath, parameters);
+      this.logger.log(this.logger.warn, 'can\'t create route from {0} with parameters {1}', this.fullPath, parameters);
       return null;
     }
   }

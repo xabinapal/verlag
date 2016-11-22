@@ -29,7 +29,7 @@
       main: String,
       title: String,
       content: String,
-      module: moduleSchema,
+      modules: [moduleSchema],
       conditions: [String]
     });
 

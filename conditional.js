@@ -1,9 +1,9 @@
 ;(function() {
   'use strict';
 
-  const debug = require('debug')('verlag:conditional');
-
   module.exports = (route, condition) => {
+    let logger = route.logger.create('conditional');
+
     let result;
     let split = condition.split(/\s+/);
 
@@ -17,16 +17,16 @@
         break;
 
       default:
-        debug('%s: invalid condition: %s', route.id, condition);
+        logger.log(logger.warn, 'invalid condition: {0}', condition);
         return false;
     }
   
     if (result === null) {
-      debug('%s: invalid %s condition: %s', route.id, split[0], condition);
+      logger.log(logger.warn, 'invalid {0} condition: {1}', split[0], condition);
       return false;
     }
 
-    debug('%s: %s condition result: %s === %s', route.id, split[0], condition, result);
+    logger.log(logger.info, '{0} condition result: {1} === {2}', split[0], condition, result);
     return result;
   };
 

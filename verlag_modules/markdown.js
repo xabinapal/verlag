@@ -6,7 +6,7 @@
 
   const showdown = require('showdown');
   
-  function parse(section, args, req, res, next) {
+  function parse(section, args, logger, req, res, next) {
     section.content = new showdown.Converter().makeHtml(section.content);
     next();
   }

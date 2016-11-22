@@ -1,12 +1,10 @@
 ;(function() {
   'use strict';
 
-  const debug = require('debug')('verlag:server');
   const path = require('path');
-  const uuid = require('uuid');
 
   module.exports = (function() {
-    var serverDefaults = {
+    let serverDefaults = {
       port: 3000,
       onError: onError,
       onListening: onListening,
@@ -16,76 +14,87 @@
       viewEngine: 'pug',
 
       pageView: 'page',
-      errorView: 'error'
+      errorView: 'error',
+
+      logFile: null
     };
 
-    var appDefaults = {
+    let appDefaults = {
       appTitle: 'verlag',
     };
 
-    var app, http, mongoose;
-    var id, server, instance;
+    let serverLogger;
 
-    var serverOptions, appOptions;
-    var extraModules;
+    let app, http, mongoose;
+    let server, instance;
 
-    function verlag(options) {
-      app = require('./app');
-      http = require('http');
-      mongoose = require('mongoose');
+    let serverOptions, appOptions;
+    let extraModules;
 
-      mongoose.Promise = global.Promise;
+    class Verlag {
+      constructor(options) {
+        app = require('./app');
+        http = require('http');
 
-      serverOptions = Object.assign({}, serverDefaults);
-      appOptions = Object.assign({}, appDefaults);
-    }
+        mongoose = require('mongoose');
+        mongoose.Promise = global.Promise;
 
-    verlag.prototype.setServerOptions = function(opts) {
-      Object.assign(serverOptions, opts);
-    }
+        serverOptions = Object.assign({}, serverDefaults);
+        appOptions = Object.assign({}, appDefaults);
+      }
 
-    verlag.prototype.setAppOptions = function(opts) {
-      Object.assign(appOptions, opts);
-    }
+      setServerOptions(opts) {
+        Object.assign(serverOptions, opts);
+      }
 
-    verlag.prototype.startServer = function() {
-      id = uuid.v4();
-      debug('%s: starting server...', id);
-      var modules = require('./modules');
-      var models = Object.create(null);
+      setAppOptions(opts) {
+        Object.assign(appOptions, opts);
+      }
 
-      debug('%s: opening database connection...', id);
-      mongoose.connect(serverOptions.databaseConnection);
-      var db = mongoose.connection;
+      startServer() {
+        const logger = require('./logger')(serverOptions.logFile);
+        let mainLogger = new logger('verlag');
+        serverLogger = mainLogger.create('server');
 
-      db.on('error', () => debug('%s: error opening database connection', id));
-      db.once('open', function() {
-        debug('%s: database connection opened', id);
-        ['menu', 'page', 'category', 'publication'].forEach(function(model) {
-          models[model] = require('./models/' + model)(mongoose);
+        serverLogger.log(serverLogger.info, 'starting server...');
+
+        const modules = require('./modules');
+        let models = Object.create(null);
+
+        serverLogger.log(serverLogger.debug, 'opening database connection...');
+        mongoose.connect(serverOptions.databaseConnection);
+
+        const db = mongoose.connection;
+        db.on('error', () => serverLogger.log(serverLogger.error, 'error opening database connection'));
+        db.once('open', function() {
+          serverLogger.log(serverLogger.debug, 'database connection opened');
+          ['menu', 'page', 'category', 'publication'].forEach(function(model) {
+            models[model] = require('./models/' + model)(mongoose);
+          });
+
+          ['markdown', 'form', 'mailer', 'menu', 'catalog'].forEach(module => {
+            let m = path.join(__dirname, 'verlag_modules', module);
+            require(m)(modules);
+          });
+
+          instance = app(appOptions, mainLogger, modules, models);
+
+          serverLogger.log(serverLogger.debug, 'setting views path: {0}', serverOptions.viewsPath);
+          instance.set('views', serverOptions.viewsPath);
+          serverLogger.log(serverLogger.debug, 'setting views engine: {0}', serverOptions.viewEngine);
+          instance.set('view engine', serverOptions.viewEngine);
+
+          serverLogger.log(serverLogger.debug, 'setting page view: {0}', serverOptions.pageView);
+          instance.set('page view', serverOptions.pageView);
+          serverLogger.log(serverLogger.debug, 'setting error view: {0}', serverOptions.errorView);
+          instance.set('error view', serverOptions.errorView);
+
+          server = http.createServer(instance);
+          server.listen(serverOptions.port);
+          server.on('error', serverOptions.onError);
+          server.on('listening', serverOptions.onListening);
         });
-
-        ['markdown', 'form', 'mailer', 'menu', 'catalog'].forEach(module => {
-          var m = path.join(__dirname, 'verlag_modules', module);
-          require(m)(modules);
-        });
-
-        instance = app(appOptions, modules, models);
-        instance.set('views', serverOptions.viewsPath);
-        debug('%s: setting views path: %s', id, serverOptions.viewsPath);
-        instance.set('view engine', serverOptions.viewEngine);
-        debug('%s: setting view engine: %s', id, serverOptions.viewEngine);
-
-        instance.set('page view', serverOptions.pageView);
-        debug('%s: setting page view: %s', id, serverOptions.pageView);
-        instance.set('error view', serverOptions.errorView);
-        debug('%s: setting error view: %s', id, serverOptions.errorView);
-
-        server = http.createServer(instance);
-        server.listen(serverOptions.port);
-        server.on('error', serverOptions.onError);
-        server.on('listening', serverOptions.onListening);
-      });
+      }
     }
 
     function onError(error) {
@@ -93,18 +102,18 @@
         throw error;
       }
 
-      var addr = server.address();
-      var bind = typeof addr === 'string'
+      let addr = server.address();
+      let bind = typeof addr === 'string'
         ? 'pipe ' + addr
         : 'port ' + addr.port;
 
       switch (error.code) {
         case 'EACCES':
-          debug('%s: %s requires elevated privileges', id, bind);
+          serverLogger.log(serverLogger.error, '{0} requires elevated privileges', bind);
           process.exit(1);
           break;
         case 'EADDRINUSE':
-          debug('%s: %s is already in use', id, bind);
+          serverLogger.log(serverLogger.error, '{0} is already in use', bind);
           process.exit(1);
           break;
         default:
@@ -113,14 +122,14 @@
     }
 
     function onListening() {
-      var addr = server.address();
-      var bind = typeof addr === 'string'
+      let addr = server.address();
+      let bind = typeof addr === 'string'
         ? 'pipe ' + addr
         : 'port ' + addr.port;
 
-      debug('%s: listening on ' + bind, id);
+      serverLogger.log(serverLogger.info, 'listening on {0}', bind);
     }
 
-    return verlag;
+    return Verlag;
   })();
 })();

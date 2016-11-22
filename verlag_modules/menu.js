@@ -6,7 +6,7 @@
 
   const pug = require('pug');
 
-  function show(section, args, req, res, next) {
+  function show(section, args, logger, req, res, next) {
     let view = req.app.get('view getter')(args.get('view'));
     section.content = pug.renderFile(view, {
       menu: res.locals.routes.menus.get(args.get('menu'))
