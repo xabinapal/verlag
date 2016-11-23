@@ -23,8 +23,8 @@
 
     app.disable('x-powered-by');
 
-    //app.use(logger.requestLogger);
-    //app.use(logger.responseLogger);
+    app.use(logger.requestLogger);
+    app.use(logger.responseLogger);
 
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));

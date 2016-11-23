@@ -3,6 +3,7 @@
 
   module.exports = (file) => {
     const morgan = require('morgan');
+    const morganJson = require('morgan-json');
     const uuid = require('uuid');
     const winston = require('winston');
 
@@ -13,7 +14,7 @@
         filename: file,
         handleExceptions: true,
         json: true,
-        maxsize: 5242880, // 5MB
+        maxsize: 5242880,
         maxFiles: 5,
         colorize: false
       }));
@@ -22,16 +23,11 @@
       new winston.transports.Console({
         level: 'debug',
         handleExceptions: true,
-        json: true,
+        json: false,
         colorize: true
       }));
 
     const access = new winston.Logger({ transports, exitOnError: false });
-    const stream = {
-      write(message) {
-        access.info(message);
-      }
-    }
 
     class Logger {
       constructor(name, id) {
@@ -78,11 +74,8 @@
           });
         }
 
-        winston[level.toString().slice(7, -1)](JSON.stringify({
-          id: this.id,
-          module: this.name,
-          message
-        }));
+        let log = { id: this.id, module: this.name, message };
+        access[level.toString().slice(7, -1)](log);
       }
     }
 
@@ -95,18 +88,30 @@
       error: Symbol('error')
     };
 
-    Object.keys(levels).forEach(x => {
-      Logger[x] = levels[x];
-      Logger.prototype[x] = levels[x];
+    Object.keys(levels).forEach(x => Logger[x] = Logger.prototype[x] = levels[x]);
+
+    const request = morganJson({
+      remoteAddr: ':remote-addr',
+      remoteUser: ':remote-user',
+      date: ':date[clf]',
+      method: ':method',
+      url: ':url',
+      httpVersion: ':http-version',
+      status: ':status',
+      resultLength: ':res[content-length]',
+      referrer: ':referrer',
+      userAgent: ':user-agent',
+      responseTime: ':response-time'
     });
 
-    Logger.requestLogger = morgan(
-      '{"remote_addr": ":remote-addr", "remote_user": ":remote-user", "date": ":date[clf]", "method": ":method", "url": ":url", "http_version": ":http-version", "status": ":status", "result_length": ":res[content-length]", "referrer": ":referrer", "user_agent": ":user-agent", "response_time": ":response-time"}',
-      { immediate: true, stream });
+    Logger.requestLogger = Logger.prototype.requestLogger = morgan(request, {
+        immediate: true,
+        stream: { write: (message) => access.info(JSON.parse(message)) }
+    });
 
-    Logger.responseLogger = morgan(
-      '{"remote_addr": ":remote-addr", "remote_user": ":remote-user", "date": ":date[clf]", "method": ":method", "url": ":url", "http_version": ":http-version", "status": ":status", "result_length": ":res[content-length]", "referrer": ":referrer", "user_agent": ":user-agent", "response_time": ":response-time"}',
-      { stream });
+    Logger.responseLogger = Logger.prototype.responseLogger = morgan(request, {
+        stream: { write: (message) => access.info(JSON.parse(message)) }
+    });
 
     return Logger;
   };
