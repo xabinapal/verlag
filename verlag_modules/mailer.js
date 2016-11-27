@@ -8,22 +8,22 @@
   const htmlToText = require('nodemailer-html-to-text').htmlToText;
   const pug = require('pug');
 
-  function send(section, args, logger, req, res, next) {
+  function send(section, args, ctx) {
     let subject = args.get('subject');
 
-    let formKeys = Object.keys(req.body)
+    let formKeys = Object.keys(ctx.body)
       .filter(key => key.startsWith(args.get('prefix')))
-      .reduce((map, key) => map.set(key.slice(args.get('prefix').length), req.body[key]), new Map());
+      .reduce((map, key) => map.set(key.slice(args.get('prefix').length), ctx.body[key]), new Map());
 
     formKeys.forEach((key, value) => subject = subject.replace(`{${key}}`, value));
 
-    let view = req.app.get('view getter')(args.get('view'));
+    let view = ctx.view(args.get('view'));
     let content = pug.renderFile(view, formKeys);
 
     let transporter = nodemailer.createTransport();
     transporter.use('compile', htmlToText());
 
-    logger.log('debug', 'sending mail...');
+    ctx.logger.log(ctx.logger.debug, 'sending mail...');
 
     transporter.sendMail({
       from: args.get('from'),
@@ -32,13 +32,13 @@
       html: content
     }, function(err, info) {
       if (err) {
-        logger.log(logger.error, 'can\'t send mail: {0}', err);
+        ctx.logger.log(ctx.logger.error, 'can\'t send mail: {0}', err);
       } else {
-        logger.log(logger.info, 'mail sent: {0}', info.response);
+        ctx.logger.log(ctx.logger.info, 'mail sent: {0}', info.response);
       }
 
-      res.locals.modules.get('mailer').set('status', err);
-      next();
+      ctx.locals.modules.get('mailer').set('status', err);
+      ctx.next();
     })
   }
 

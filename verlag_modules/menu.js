@@ -6,12 +6,13 @@
 
   const pug = require('pug');
 
-  function show(section, args, logger, req, res, next) {
-    let view = req.app.get('view getter')(args.get('view'));
+  function show(section, args, ctx) {
+    let view = ctx.view(args.get('view'));
     section.content = pug.renderFile(view, {
-      menu: res.locals.routes.menus.get(args.get('menu'))
+      menu: ctx.locals.routes.menus.get(args.get('menu'))
     });
-    next();
+
+    ctx.next();
   }
 
   module.exports = factory => factory.create(name, actions);

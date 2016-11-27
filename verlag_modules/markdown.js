@@ -6,9 +6,9 @@
 
   const showdown = require('showdown');
   
-  function parse(section, args, logger, req, res, next) {
+  function parse(section, args, ctx) {
     section.content = new showdown.Converter().makeHtml(section.content);
-    next();
+    ctx.next();
   }
 
   module.exports = factory => factory.create(name, actions);

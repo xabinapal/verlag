@@ -1,6 +1,8 @@
 ;(function() {
   'use strict';
 
+  const Context = require('./context');
+
   let injected = new Map();
 
   module.exports.create = (name, actions) => {
@@ -18,6 +20,7 @@
 
   module.exports.inject = (req, res, next) => {
     let logger = req.logger.create('modules');
+    let context = new Context(req, res);
 
     let modules = (res.locals.routes.current.page.content || [])
       .filter(section => section.modules.length)
@@ -40,7 +43,7 @@
       m !== null && logger.log(logger.debug, 'injecting module {0}.{1}', m.name, m.action);
       return m === null
         ? next
-        : err => err && next(err) || m.module(m.section, m.args, logger.create(m.name), req, res, exec(index + 1));
+        : err => err && next(err) || context.call(m, logger, exec(index + 1));
     })(0)();
   }
 })();

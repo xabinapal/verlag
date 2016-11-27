@@ -6,48 +6,49 @@
 
   const pug = require('pug');
 
-  function categories(section, args, logger, req, res, next) {
-    let view = req.app.get('view getter')(args.get('view'));
-    req.models.category.getAll()
+  function categories(section, args, ctx) {
+    let view = ctx.view(args.get('view'));
+    ctx.models.category.getAll()
       .then(categories => {
         section.content = pug.renderFile(view, {
-          current: res.locals.routes.current,
+          current: ctx.current,
           categories: categories
         });
 
-        next();
+        ctx.next();
       });
   }
 
-  function publications(section, args, logger, req, res, next) {
-    let view = req.app.get('view getter')(args.get('view'));
-    req.models.category.getByPath(res.locals.routes.current.getParameter('category'))
+  function publications(section, args, ctx) {
+    let view = ctx.view(args.get('view'));
+    ctx.models.category.getByPath(ctx.current.getParameter('category'))
       .then(category => {
         section.title = section.title.replace(args.get('replace'), category.get('name'));
         section.category = category;
-        return req.models.publication.getByCategory(category);
+        return ctx.models.publication.getByCategory(category);
       }).then(publications => {
         section.content = pug.renderFile(view, {
-          current: res.locals.routes.current,
+          current: ctx.current.current,
           category: section.category,
           publications: publications
         });
 
-        next();
+        ctx.next();
       });
   }
 
   publications.args = { replace: String };
 
-  function latest(section, args, logger, req, res, next) {
-    let view = req.app.get('view getter')(args.get('view'));
-    req.models.publication.getLatest(args.get('count'))
+  function latest(section, args, ctx) {
+    let view = ctx.view(args.get('view'));
+    ctx.models.publication.getLatest(args.get('count'))
       .then(publications => {
         section.content = pug.renderFile(view, {
           publications: publications,
           count: args.get('count')
         });
-        next();
+
+        ctx.next();
       });
   }
 

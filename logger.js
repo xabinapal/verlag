@@ -28,7 +28,10 @@
       }));
 
     const access = new winston.Logger({ transports, exitOnError: false });
+    const write = (message) => access.info(JSON.parse(message));
 
+    const levels = {};
+    
     class Logger {
       constructor(name, id) {
         this._name = name;
@@ -79,16 +82,11 @@
       }
     }
 
-    const levels = {
-      silly: Symbol('silly'),
-      debug: Symbol('debug'),
-      verbose: Symbol('verbose'),
-      info: Symbol('info'),
-      warn: Symbol('warn'),
-      error: Symbol('error')
-    };
-
-    Object.keys(levels).forEach(x => Logger[x] = Logger.prototype[x] = levels[x]);
+    ['silly', 'debug', 'verbose', 'info', 'warn', 'error'].forEach(x => {
+      levels[x] = Symbol(x);
+      Logger[x] = levels[x];
+      Logger.prototype[x] = levels[x];
+    });
 
     const request = morganJson({
       remoteAddr: ':remote-addr',
@@ -104,14 +102,11 @@
       responseTime: ':response-time'
     });
 
-    Logger.requestLogger = Logger.prototype.requestLogger = morgan(request, {
-        immediate: true,
-        stream: { write: (message) => access.info(JSON.parse(message)) }
-    });
+    Logger.requestLogger = morgan(request, { immediate: true, stream: { write } });
+    Logger.prototype.requestLogger = Logger.requestLogger;
 
-    Logger.responseLogger = Logger.prototype.responseLogger = morgan(request, {
-        stream: { write: (message) => access.info(JSON.parse(message)) }
-    });
+    Logger.responseLogger = morgan(request, { stream: { write } });
+    Logger.prototype.responseLogger = Logger.responseLogger;
 
     return Logger;
   };
