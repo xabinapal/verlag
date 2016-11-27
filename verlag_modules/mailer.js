@@ -8,16 +8,16 @@
   const htmlToText = require('nodemailer-html-to-text').htmlToText;
   const pug = require('pug');
 
-  function send(section, args, ctx) {
-    let subject = args.get('subject');
+  function send(ctx) {
+    let subject = ctx.arg('subject');
 
     let formKeys = Object.keys(ctx.body)
-      .filter(key => key.startsWith(args.get('prefix')))
-      .reduce((map, key) => map.set(key.slice(args.get('prefix').length), ctx.body[key]), new Map());
+      .filter(key => key.startsWith(ctx.arg('prefix')))
+      .reduce((map, key) => map.set(key.slice(ctx.arg('prefix').length), ctx.body[key]), new Map());
 
     formKeys.forEach((key, value) => subject = subject.replace(`{${key}}`, value));
 
-    let view = ctx.view(args.get('view'));
+    let view = ctx.view;
     let content = pug.renderFile(view, formKeys);
 
     let transporter = nodemailer.createTransport();
@@ -26,8 +26,8 @@
     ctx.logger.log(ctx.logger.debug, 'sending mail...');
 
     transporter.sendMail({
-      from: args.get('from'),
-      to: args.get('to'),
+      from: ctx.arg('from'),
+      to: ctx.arg('to'),
       subject: subject,
       html: content
     }, function(err, info) {

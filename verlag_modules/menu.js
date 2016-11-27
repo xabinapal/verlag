@@ -6,10 +6,10 @@
 
   const pug = require('pug');
 
-  function show(section, args, ctx) {
-    let view = ctx.view(args.get('view'));
-    section.content = pug.renderFile(view, {
-      menu: ctx.locals.routes.menus.get(args.get('menu'))
+  function show(ctx) {
+    let view = ctx.view;
+    ctx.section.content = pug.renderFile(view, {
+      menu: ctx.locals.routes.menus.get(ctx.arg('menu'))
     });
 
     ctx.next();

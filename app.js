@@ -72,25 +72,27 @@
           page.page.menus.forEach(menu => menus.get(menu.menu.toHexString()).addPage(page));
         });
 
-        res.locals.routes.current = pages.find(x => x.match(req));
+        let current = pages.find(x => x.match(req));
+        res.locals.routes.current = current;
+        req.router = current;
         next();
       });
     });
 
     app.use((req, res, next) => {
-      let route = res.locals.routes.current;
-
-      if (route) {
-        route.page.getData().then(page => {
+      if (req.router) {
+        req.router.page.getData().then(page => {
           let content = page.content.map(section => {
-            section.content = escapeHtml(section.content);
-            return (section.conditions || []).find(x => !route.evaluateCondition(x))
-              ? null
-              : section;
+            if (req.router.evaluateConditions(section.conditions)) {
+              section.content = escapeHtml(section.content);
+              return section;
+            }
+
+            return null;
           }).filter(section => section !== null);
 
           page.content = content;
-          res.locals.routes.current.page = page;
+          req.router.page = page;
           next();
         });
       } else {

@@ -1,9 +1,15 @@
 ;(function() {
   'use strict';
 
+  const conditional = require('./conditional');
+
   const Context = require('./context');
 
   let injected = new Map();
+  let data = module => ({
+    data: module,
+    module: injected.get(module.name).get(module.action)
+  });
 
   module.exports.create = (name, actions) => {
     let moduleActions = actions.reduce((map, action) => map.set(action.name, action), new Map());
@@ -20,30 +26,27 @@
 
   module.exports.inject = (req, res, next) => {
     let logger = req.logger.create('modules');
-    let context = new Context(req, res);
+    let context = new Context(req, res, logger);
 
-    let modules = (res.locals.routes.current.page.content || [])
-      .filter(section => section.modules.length)
-      .map(section => {
-        return section.modules.map(module => {
-          let args = module.args.reduce((map, arg) => map.set(arg.key, arg.value), new Map());
-          return {
-            module: injected.get(module.name).get(module.action),
-            name: module.name,
-            action: module.action,
-            section: section,
-            args: args
-          };
-        });
-      }).reduce((a, b) => a.concat(b), []);
+    let modules = (req.router.page.modules || [])
+      .filter(module => req.router.evaluateConditions(module.conditions))
+      .map(data)
+      .map(module => context.create(module, null));
+
+    modules = modules.concat(
+      (req.router.page.content || [])
+        .filter(section => section.modules.length)
+        .map(section => section.modules
+          .filter(module => req.router.evaluateConditions(module.conditions))
+          .map(data)
+          .map(module => context.create(module, section)))
+        .reduce((a, b) => a.concat(b), []));
 
     modules.push(null);
+
     (function exec(index) {
-      var m = index < modules.length ? modules[index] : null;
-      m !== null && logger.log(logger.debug, 'injecting module {0}.{1}', m.name, m.action);
-      return m === null
-        ? next
-        : err => err && next(err) || context.call(m, logger, exec(index + 1));
+      let ctx = index < modules.length ? modules[index] : null;
+      return ctx ? err => err && next(err) || ctx.call(exec(index + 1)) : next;
     })(0)();
   }
 })();

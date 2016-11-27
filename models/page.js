@@ -22,7 +22,8 @@
           key: String,
           value: Object
         }
-      ]
+      ],
+      conditions: [String]
     });
 
     var contentSchema = new mongoose.Schema({
@@ -43,6 +44,7 @@
       basePath: { type: String, unique: true },
       path: [pathSchema],
       title: { type: String, required: true },
+      modules: [moduleSchema],
       content: [contentSchema],
       menus: [menuSchema]
     });

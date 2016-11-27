@@ -98,8 +98,8 @@ class Router {
     return this.hasParameter(key) !== undefined;
   }
 
-  evaluateCondition(condition) {
-    return conditional(this, condition);
+  evaluateConditions(conditions) {
+    return (conditions || []).every(x => conditional(this, x));
   }
 
   isOptionalPathSet(key) {

@@ -6,11 +6,11 @@
 
   const pug = require('pug');
 
-  function categories(section, args, ctx) {
-    let view = ctx.view(args.get('view'));
+  function categories(ctx) {
+    let view = ctx.view;
     ctx.models.category.getAll()
       .then(categories => {
-        section.content = pug.renderFile(view, {
+        ctx.section.content = pug.renderFile(view, {
           current: ctx.current,
           categories: categories
         });
@@ -19,17 +19,17 @@
       });
   }
 
-  function publications(section, args, ctx) {
-    let view = ctx.view(args.get('view'));
+  function publications(ctx) {
+    let view = ctx.view;
     ctx.models.category.getByPath(ctx.current.getParameter('category'))
       .then(category => {
-        section.title = section.title.replace(args.get('replace'), category.get('name'));
-        section.category = category;
+        ctx.section.title = ctx.section.title.replace(ctx.arg('replace'), category.get('name'));
+        ctx.section.category = category;
         return ctx.models.publication.getByCategory(category);
       }).then(publications => {
-        section.content = pug.renderFile(view, {
+        ctx.section.content = pug.renderFile(view, {
           current: ctx.current.current,
-          category: section.category,
+          category: ctx.section.category,
           publications: publications
         });
 
@@ -39,13 +39,13 @@
 
   publications.args = { replace: String };
 
-  function latest(section, args, ctx) {
-    let view = ctx.view(args.get('view'));
-    ctx.models.publication.getLatest(args.get('count'))
+  function latest(ctx) {
+    let view = ctx.view;
+    ctx.models.publication.getLatest(ctx.arg('count'))
       .then(publications => {
-        section.content = pug.renderFile(view, {
+        ctx.section.content = pug.renderFile(view, {
           publications: publications,
-          count: args.get('count')
+          count: ctx.arg('count')
         });
 
         ctx.next();
