@@ -29,6 +29,7 @@
     var contentSchema = new mongoose.Schema({
       main: String,
       title: String,
+      subtitle: String,
       content: String,
       modules: [moduleSchema],
       conditions: [String]
@@ -44,6 +45,7 @@
       basePath: { type: String, unique: true },
       path: [pathSchema],
       title: { type: String, required: true },
+      subtitle: String,
       modules: [moduleSchema],
       content: [contentSchema],
       menus: [menuSchema]

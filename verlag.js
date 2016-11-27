@@ -21,6 +21,7 @@
 
     let appDefaults = {
       appTitle: 'verlag',
+      staticPath: 'static/'
     };
 
     let serverLogger;

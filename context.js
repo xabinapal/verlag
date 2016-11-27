@@ -3,6 +3,8 @@
 
   let _logger = null;
 
+  const pug = require('pug');
+
   class Context {
     constructor(req, res, logger) {
       this.req = req;
@@ -53,6 +55,12 @@
 
     arg(arg) {
       return this.args.get(arg);
+    }
+
+    render(locals) {
+      let view = this.view;
+      locals = Object.assign({}, this.res.locals, locals);
+      return pug.renderFile(view, locals);
     }
   }
 

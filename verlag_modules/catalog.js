@@ -4,13 +4,10 @@
   const name = 'catalog';
   const actions = [categories, publications, latest];
 
-  const pug = require('pug');
-
   function categories(ctx) {
-    let view = ctx.view;
     ctx.models.category.getAll()
       .then(categories => {
-        ctx.section.content = pug.renderFile(view, {
+        ctx.section.content = ctx.render({
           current: ctx.current,
           categories: categories
         });
@@ -20,14 +17,13 @@
   }
 
   function publications(ctx) {
-    let view = ctx.view;
     ctx.models.category.getByPath(ctx.current.getParameter('category'))
       .then(category => {
         ctx.section.title = ctx.section.title.replace(ctx.arg('replace'), category.get('name'));
         ctx.section.category = category;
         return ctx.models.publication.getByCategory(category);
       }).then(publications => {
-        ctx.section.content = pug.renderFile(view, {
+        ctx.section.content = ctx.render({
           current: ctx.current.current,
           category: ctx.section.category,
           publications: publications
@@ -40,10 +36,9 @@
   publications.args = { replace: String };
 
   function latest(ctx) {
-    let view = ctx.view;
     ctx.models.publication.getLatest(ctx.arg('count'))
       .then(publications => {
-        ctx.section.content = pug.renderFile(view, {
+        ctx.section.content = ctx.render({
           publications: publications,
           count: ctx.arg('count')
         });

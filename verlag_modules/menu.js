@@ -4,11 +4,8 @@
   const name = 'menu';
   const actions = [show];
 
-  const pug = require('pug');
-
   function show(ctx) {
-    let view = ctx.view;
-    ctx.section.content = pug.renderFile(view, {
+    ctx.section.content = ctx.render({
       menu: ctx.locals.routes.menus.get(ctx.arg('menu'))
     });
 

@@ -4,11 +4,9 @@
   const name = 'form';
   const actions = [show];
 
-  const pug = require('pug');
   const recaptcha = require('recaptcha2');
 
   function show(ctx) {
-    let view = ctx.view;
     let args = ctx.arg('recaptcha');
 
     let captcha = args && new recaptcha({
@@ -16,7 +14,7 @@
       secretKey: args.secretKey
     });
 
-    ctx.section.content = pug.renderFile(view, { recaptcha: captcha && captcha.formElement() });
+    ctx.section.content = ctx.render({ recaptcha: captcha && captcha.formElement() });
     ctx.next();
   }
 

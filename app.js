@@ -10,7 +10,6 @@
     const path = require('path');
 
     const app = express();
-    app.locals = locals;
 
     const Menu = require('./menu');
     const Router = require('./router');
@@ -32,6 +31,7 @@
     app.use((req, res, next) => {
       req.logger = logger;
       req.models = models;
+      res.locals = Object.assign({}, locals);
       res.locals.modules = new Map();
       modules.list().forEach(m => res.locals.modules.set(m, new Map()));
       next();

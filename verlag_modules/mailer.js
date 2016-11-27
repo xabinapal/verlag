@@ -6,7 +6,6 @@
   
   const nodemailer = require('nodemailer');
   const htmlToText = require('nodemailer-html-to-text').htmlToText;
-  const pug = require('pug');
 
   function send(ctx) {
     let subject = ctx.arg('subject');
@@ -17,8 +16,7 @@
 
     formKeys.forEach((key, value) => subject = subject.replace(`{${key}}`, value));
 
-    let view = ctx.view;
-    let content = pug.renderFile(view, formKeys);
+    let content = ctx.render(formKeys);
 
     let transporter = nodemailer.createTransport();
     transporter.use('compile', htmlToText());
