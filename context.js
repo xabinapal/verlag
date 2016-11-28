@@ -1,30 +1,20 @@
 ;(function() {
   'use strict';
 
-  let _logger = null;
-
   const pug = require('pug');
 
+  let _req, _res, _logger;
+
   class Context {
-    constructor(req, res, logger) {
-      this.req = req;
-      this.res = res;
-      _logger = _logger || logger;
-    }
+    constructor(module, section = null) {
+      this.module = module.module;
+      this.name = module.data.name;
+      this.action = module.data.action;
+      this.section = section;
+      this.type = section ? 'section' : 'page';
 
-    create(module, section) {
-      let ctx = new Context(this.req, this.res);
-
-      ctx.module = module.module;
-      ctx.name = module.data.name;
-      ctx.action = module.data.action;
-      ctx.section = section;
-      ctx.type = section ? 'section' : 'page';
-
-      ctx.args = module.data.args.reduce((map, arg) => map.set(arg.key, arg.value), new Map());
-      ctx.logger = _logger.create(module.data.name).create(module.data.action);
-
-      return ctx;
+      this.args = module.data.args.reduce((map, arg) => map.set(arg.key, arg.value), new Map());
+      this.logger = _logger.create(module.data.name).create(module.data.action);
     }
 
     call(next) {
@@ -34,23 +24,23 @@
     }
 
     get view() {
-      return this.req.app.get('view getter')(this.args.get('view'));
+      return _req.app.get('view getter')(this.args.get('view'));
     }
 
     get models() {
-      return this.req.models;
+      return _req.models;
     }
 
     get current() {
-      return this.res.locals.routes.current;
+      return _res.locals.routes.current;
     }
 
     get body() {
-      return this.req.body;
+      return _req.body;
     }
 
     get locals() {
-      return this.res.locals;
+      return _res.locals;
     }
 
     arg(arg) {
@@ -59,10 +49,15 @@
 
     render(locals) {
       let view = this.view;
-      locals = Object.assign({}, this.res.locals, locals);
+      locals = Object.assign({}, _res.locals, locals);
       return pug.renderFile(view, locals);
     }
   }
 
-  module.exports = Context;
+  module.exports = (req, res, logger) => {
+    _req = req;
+    _res = res;
+    _logger = logger;
+    return Context;
+  };
 })();

@@ -26,12 +26,12 @@
 
   module.exports.inject = (req, res, next) => {
     let logger = req.logger.create('modules');
-    let context = new Context(req, res, logger);
+    let context = Context(req, res, logger);
 
     let modules = (req.router.page.modules || [])
       .filter(module => req.router.evaluateConditions(module.conditions))
       .map(data)
-      .map(module => context.create(module, null));
+      .map(module => new context(module));
 
     modules = modules.concat(
       (req.router.page.content || [])
@@ -39,7 +39,7 @@
         .map(section => section.modules
           .filter(module => req.router.evaluateConditions(module.conditions))
           .map(data)
-          .map(module => context.create(module, section)))
+          .map(module => new context(module, section)))
         .reduce((a, b) => a.concat(b), []));
 
     modules.push(null);
