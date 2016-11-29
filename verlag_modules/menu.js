@@ -5,8 +5,8 @@
   const actions = [show];
 
   function show(ctx) {
-    ctx.section.content = ctx.render({
-      menu: ctx.locals.routes.menus.get(ctx.arg('menu'))
+    ctx.content = ctx.render({
+      menu: ctx.routes.menus.get(ctx.arg('menu'))
     });
 
     ctx.next();

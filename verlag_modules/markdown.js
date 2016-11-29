@@ -7,7 +7,7 @@
   const showdown = require('showdown');
   
   function parse(ctx) {
-    ctx.section.content = new showdown.Converter().makeHtml(ctx.section.content);
+    ctx.content = new showdown.Converter().makeHtml(ctx.section.content);
     ctx.next();
   }
 

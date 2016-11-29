@@ -31,8 +31,8 @@
       return _req.models;
     }
 
-    get current() {
-      return _res.locals.routes.current;
+    get routes() {
+      return _res.locals.routes;
     }
 
     get body() {
@@ -47,6 +47,20 @@
       return this.args.get(arg);
     }
 
+    set(prop, arg) {
+      res.locals.modules.get(this.name).set(prop, arg);
+    }
+  }
+
+  class SectionContext extends Context {
+    get content() {
+      return this.section ? section.content : null;
+    }
+
+    set content(val) {
+      this.section && (this.section.content = val);
+    }
+
     render(locals) {
       let view = this.view;
       locals = Object.assign({}, _res.locals, locals);
@@ -58,6 +72,6 @@
     _req = req;
     _res = res;
     _logger = logger;
-    return Context;
+    return { Context, SectionContext };
   };
 })();

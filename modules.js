@@ -3,7 +3,7 @@
 
   const conditional = require('./conditional');
 
-  const Context = require('./context');
+  const context = require('./context');
 
   let injected = new Map();
   let data = module => ({
@@ -26,12 +26,12 @@
 
   module.exports.inject = (req, res, next) => {
     let logger = req.logger.create('modules');
-    let context = Context(req, res, logger);
+    let ctx = context(req, res, logger);
 
     let modules = (req.router.page.modules || [])
       .filter(module => req.router.evaluateConditions(module.conditions))
       .map(data)
-      .map(module => new context(module));
+      .map(module => new ctx.Context(module));
 
     modules = modules.concat(
       (req.router.page.content || [])
@@ -39,7 +39,7 @@
         .map(section => section.modules
           .filter(module => req.router.evaluateConditions(module.conditions))
           .map(data)
-          .map(module => new context(module, section)))
+          .map(module => new ctx.SectionContext(module, section)))
         .reduce((a, b) => a.concat(b), []));
 
     modules.push(null);

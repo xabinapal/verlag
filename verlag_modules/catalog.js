@@ -7,8 +7,8 @@
   function categories(ctx) {
     ctx.models.category.getAll()
       .then(categories => {
-        ctx.section.content = ctx.render({
-          current: ctx.current,
+        ctx.content = ctx.render({
+          current: ctx.routes.current,
           categories: categories
         });
 
@@ -17,14 +17,14 @@
   }
 
   function publications(ctx) {
-    ctx.models.category.getByPath(ctx.current.getParameter('category'))
+    ctx.models.category.getByPath(ctx.routes.current.getParameter('category'))
       .then(category => {
         ctx.section.title = ctx.section.title.replace(ctx.arg('replace'), category.get('name'));
         ctx.section.category = category;
         return ctx.models.publication.getByCategory(category);
       }).then(publications => {
-        ctx.section.content = ctx.render({
-          current: ctx.current.current,
+        ctx.content = ctx.render({
+          current: ctx.routes.current,
           category: ctx.section.category,
           publications: publications
         });
@@ -38,7 +38,7 @@
   function latest(ctx) {
     ctx.models.publication.getLatest(ctx.arg('count'))
       .then(publications => {
-        ctx.section.content = ctx.render({
+        ctx.content = ctx.render({
           publications: publications,
           count: ctx.arg('count')
         });

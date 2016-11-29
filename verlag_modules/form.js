@@ -14,7 +14,7 @@
       secretKey: args.secretKey
     });
 
-    ctx.section.content = ctx.render({ recaptcha: captcha && captcha.formElement() });
+    ctx.content = ctx.render({ recaptcha: captcha && captcha.formElement() });
     ctx.next();
   }
 

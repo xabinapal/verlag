@@ -35,7 +35,7 @@
         ctx.logger.log(ctx.logger.info, 'mail sent: {0}', info.response);
       }
 
-      ctx.locals.modules.get('mailer').set('status', err);
+      ctx.set('status', err);
       ctx.next();
     })
   }
