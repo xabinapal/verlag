@@ -54,14 +54,15 @@
 
   class SectionContext extends Context {
     get content() {
-      return this.section ? section.content : null;
+      return section.content;
     }
 
     set content(val) {
-      this.section && (this.section.content = val);
+      this.section.content = val;
     }
 
     render(locals) {
+      _logger.log(_logger.silly, 'rendering view {0} requested by module {1}.{2}', this.args.get('view'), this.name, this.action);
       let view = this.view;
       locals = Object.assign({}, _res.locals, locals);
       return pug.renderFile(view, locals);

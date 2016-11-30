@@ -36,10 +36,31 @@
   publications.args = { replace: String };
 
   function latest(ctx) {
+    let route = ctx.routes.collection.findByBasePath(ctx.arg('route'));
+    let latest = undefined;
+
     ctx.models.publication.getLatest(ctx.arg('count'))
       .then(publications => {
+        latest = publications;
+        let categories = new Set(latest.map(publication => publication.categoryId.toHexString()));
+        return ctx.models.category.findById(categories);
+      }).then(categories => {
+        latest.forEach(publication => {
+          let category = (categories || []).find(category => category._id.toHexString() === publication.categoryId);
+          if (category) {
+            let params = ctx.arg('params').map(x => ({
+              key: x.key,
+              value: x.value
+                .replace('{category}', category.path)
+                .replace('{publication}', publication.insertId)
+            }));
+
+            x.route = route.create(params);
+          }
+        });
+
         ctx.content = ctx.render({
-          publications: publications,
+          publications: latest,
           count: ctx.arg('count')
         });
 

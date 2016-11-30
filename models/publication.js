@@ -12,7 +12,7 @@
       categoryId: { type: ObjectId, required: true, ref: 'Category' },
       name: { type: String, required: true },
       info: String,
-      author: String,
+      authors: [String],
       isbn: String,
       description: String,
       price: Number,

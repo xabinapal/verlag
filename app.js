@@ -12,7 +12,7 @@
     const app = express();
 
     const Menu = require('./menu');
-    const Router = require('./router');
+    const router = require('./router');
 
     app.set('view getter', view => {
       view = path.join(app.get('views'), view);
@@ -54,7 +54,8 @@
 
       res.locals.routes = Object.create({
         menus: undefined,
-        current: undefined
+        current: undefined,
+        collection: new router.RouterCollection()
       });
 
       models.menu.getAll().then(menus => {
@@ -67,12 +68,12 @@
         let menus = [...res.locals.routes.menus.values()]
           .reduce((map, menu) => map.set(menu.menu._id.toHexString(), menu), new Map());
 
-        pages = pages.map(page => new Router(page));
-        pages.forEach(page => {
+        res.locals.routes.collection.addPages(pages);
+        res.locals.routes.collection.forEach(page => {
           page.page.menus.forEach(menu => menus.get(menu.menu.toHexString()).addPage(page));
         });
 
-        let current = pages.find(x => x.match(req));
+        let current = res.locals.routes.collection.find(x => x.match(req));
         res.locals.routes.current = current;
         req.router = current;
         next();

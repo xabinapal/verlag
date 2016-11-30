@@ -10,7 +10,7 @@ class Menu {
   addPage(route) {
     let page = route.page.menus.find(p => p.menu.equals(this.menu._id));
     this.pages.add(route);
-    this.data.set(route.page._id.toHexString(), page);
+    this.data.set(route.page.id, page);
   }
 
   getPages() {
@@ -20,7 +20,7 @@ class Menu {
   }
 
   getPageData(route) {
-    return this.data.get(route.page._id.toHexString());
+    return this.data.get(route.page.id);
   }
 
   getPageTitle(route) {

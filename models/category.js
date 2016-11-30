@@ -17,6 +17,12 @@
       return this.find({ visible: true }).sort({ position: 1 }).exec();
     };
 
+    schema.statics.getById = function(ids) {
+      return ids instanceof Array
+        ? this.find({ _id: { "$in": ids }}).exec()
+        : this.findOne({ _id: ids }).exec();
+    }
+
     schema.statics.getByPath = function(path) {
       return this.findOne({ path: path }).exec();
     };

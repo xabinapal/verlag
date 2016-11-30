@@ -107,4 +107,19 @@ class Router {
   }
 }
 
-module.exports = Router;
+class RouterCollection extends Array {
+  constructor(...args) {
+    super(...args);
+  }
+
+  findByBasePath(basePath) {
+    return this.find(page => page.basePath === basePath);
+  }
+
+  addPages(pages) {
+    pages.forEach(page => this.push(new Router(page)));
+  }
+}
+
+module.exports.Router = Router;
+module.exports.RouterCollection = RouterCollection;
