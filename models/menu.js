@@ -5,7 +5,7 @@
   const tableName = 'menus';
 
   module.exports = function(mongoose) {
-    var schema = new mongoose.Schema({
+    let schema = new mongoose.Schema({
       key: { type: String, unique: true, required: true },
       name: { type: String, unique: true, required: true }
     });

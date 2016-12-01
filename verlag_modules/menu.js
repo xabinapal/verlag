@@ -6,7 +6,7 @@
 
   function show(ctx) {
     ctx.content = ctx.render({
-      menu: ctx.routes.menus.get(ctx.arg('menu'))
+      menu: ctx.menus.findByKey(ctx.arg('menu'))
     });
 
     ctx.next();

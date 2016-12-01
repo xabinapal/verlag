@@ -108,16 +108,20 @@ class Router {
 }
 
 class RouterCollection extends Array {
-  constructor(...args) {
-    super(...args);
+  constructor(routers) {
+    super(...routers.map(x => new Router(x)));
+  }
+
+  set current(req) {
+    this._current = this.find(x => x.match(req));
+  }
+
+  get current() {
+    return this._current;
   }
 
   findByBasePath(basePath) {
     return this.find(page => page.basePath === basePath);
-  }
-
-  addPages(pages) {
-    pages.forEach(page => this.push(new Router(page)));
   }
 }
 

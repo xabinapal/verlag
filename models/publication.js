@@ -5,9 +5,9 @@
   const tableName = 'publications';
 
   module.exports = function(mongoose) {
-    var ObjectId = mongoose.Schema.Types.ObjectId;
+    const ObjectId = mongoose.Schema.Types.ObjectId;
 
-    var schema = new mongoose.Schema({
+    let schema = new mongoose.Schema({
       insertId: { type: Number, unique: true, required: true },
       categoryId: { type: ObjectId, required: true, ref: 'Category' },
       name: { type: String, required: true },

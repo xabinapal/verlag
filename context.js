@@ -31,8 +31,12 @@
       return _req.models;
     }
 
-    get routes() {
-      return _res.locals.routes;
+    get routers() {
+      return _res.locals.routers;
+    }
+
+    get menus() {
+      return _res.locals.menus;
     }
 
     get body() {

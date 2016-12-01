@@ -11,7 +11,7 @@
 
     const app = express();
 
-    const Menu = require('./menu');
+    const menu = require('./menu');
     const router = require('./router');
 
     app.set('view getter', view => {
@@ -51,31 +51,17 @@
 
     app.use((req, res, next) => {
       appLogger.log(appLogger.info, 'processing request: {0}', req.path);
-
-      res.locals.routes = Object.create({
-        menus: undefined,
-        current: undefined,
-        collection: new router.RouterCollection()
-      });
-
       models.menu.getAll().then(menus => {
-        res.locals.routes.menus = menus
-          .map(menu => new Menu(menu))
-          .reduce((map, menu) => map.set(menu.menu.key, menu), new Map());
-
+        res.locals.menus = new menu.MenuCollection(menus);
         return models.page.getAll();
       }).then(pages => {
-        let menus = [...res.locals.routes.menus.values()]
-          .reduce((map, menu) => map.set(menu.menu._id.toHexString(), menu), new Map());
+        res.locals.routers = new router.RouterCollection(pages);
+        res.locals.routers.current = req;
+        req.router = res.locals.routers.current;
+        res.locals.routers.forEach(page =>
+          page.page.menus.forEach(menu =>
+            res.locals.menus.findById(menu.menu).addPage(page)));
 
-        res.locals.routes.collection.addPages(pages);
-        res.locals.routes.collection.forEach(page => {
-          page.page.menus.forEach(menu => menus.get(menu.menu.toHexString()).addPage(page));
-        });
-
-        let current = res.locals.routes.collection.find(x => x.match(req));
-        res.locals.routes.current = current;
-        req.router = current;
         next();
       });
     });

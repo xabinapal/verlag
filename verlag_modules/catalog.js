@@ -8,7 +8,7 @@
     ctx.models.category.getAll()
       .then(categories => {
         ctx.content = ctx.render({
-          current: ctx.routes.current,
+          current: ctx.routers.current,
           categories: categories
         });
 
@@ -17,14 +17,14 @@
   }
 
   function publications(ctx) {
-    ctx.models.category.getByPath(ctx.routes.current.getParameter('category'))
+    ctx.models.category.getByPath(ctx.routers.current.getParameter('category'))
       .then(category => {
         ctx.section.title = ctx.section.title.replace(ctx.arg('replace'), category.get('name'));
         ctx.section.category = category;
         return ctx.models.publication.getByCategory(category);
       }).then(publications => {
         ctx.content = ctx.render({
-          current: ctx.routes.current,
+          current: ctx.routers.current,
           category: ctx.section.category,
           publications: publications
         });
@@ -35,8 +35,25 @@
 
   publications.args = { replace: String };
 
+  function publication(ctx) {
+    let locals = {
+      category: undefined,
+      publication: undefined
+    };
+
+    ctx.models.publication.getById(ctx.routers.current.getParameter('publication'))
+      .then(publication => {
+        locals.publication = publication;
+        return ctx.models.category.getById(publication._id);
+      }).then(category => {
+        locals.category = publication;
+        ctx.context = ctx.render(locals);
+        next();
+      })
+  }
+
   function latest(ctx) {
-    let route = ctx.routes.collection.findByBasePath(ctx.arg('route'));
+    let route = ctx.routers.findByBasePath(ctx.arg('route'));
     let latest = undefined;
 
     ctx.models.publication.getLatest(ctx.arg('count'))

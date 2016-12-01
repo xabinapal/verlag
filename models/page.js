@@ -5,16 +5,16 @@
   const tableName = 'pages';
 
   module.exports = function(mongoose) {
-    var ObjectId = mongoose.Schema.Types.ObjectId;
+    const ObjectId = mongoose.Schema.Types.ObjectId;
 
-    var pathSchema = new mongoose.Schema({
+    let pathSchema = new mongoose.Schema({
       type: { type: String, required: true },
       key: { type: String, unique: true, required: true },
       parameter: Boolean,
       optional: Boolean
     });
 
-    var moduleSchema = new mongoose.Schema({
+    let moduleSchema = new mongoose.Schema({
       name: { type: String, required: true },
       action: { type: String, required: true },
       args: [
@@ -26,7 +26,7 @@
       conditions: [String]
     });
 
-    var linkSchema = new mongoose.Schema({
+    let linkSchema = new mongoose.Schema({
       basePath: { type: String, required: true },
       path: [{
         key: { type: String, unique: true, required: true },
@@ -34,7 +34,7 @@
       }]
     });
 
-    var contentSchema = new mongoose.Schema({
+    let contentSchema = new mongoose.Schema({
       main: String,
       title: String,
       subtitle: String,
@@ -44,13 +44,13 @@
       conditions: [String]
     });
 
-    var menuSchema = new mongoose.Schema({
+    let menuSchema = new mongoose.Schema({
       menu: { type: ObjectId, required: true, ref: 'Menu' },
       position: { type: Number, required: true },
       title: String
     });
 
-    var schema = new mongoose.Schema({
+    let schema = new mongoose.Schema({
       basePath: { type: String, unique: true },
       path: [pathSchema],
       title: { type: String, required: true },
@@ -71,6 +71,10 @@
     schema.methods.getData = function() {
       return this.model(modelName).findById(this._id).exec();
     };
+
+    schema.methods.hasContent = function() {
+      return this.content && this.content.length;
+    }
 
     return mongoose.model(modelName, schema, tableName);
   }

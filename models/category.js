@@ -5,7 +5,7 @@
   const tableName = 'categories';
 
   module.exports = function(mongoose) {
-    var schema = new mongoose.Schema({
+    let schema = new mongoose.Schema({
       path: { type: String, unique: true },
       name: { type: String, required: true },
       image: { type: String, required: true },
