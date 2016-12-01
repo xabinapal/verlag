@@ -7,19 +7,26 @@
     let result;
     let split = condition.split(/\s+/);
 
+    let func;
     switch (split[0]) {
+      case 'method':
+        func = method;
+        break;
+
       case 'path':
-        result = path(route, split);
+        func = path;
         break;
 
       case 'parameter':
-        result = parameter(route, split);
+        func = parameter;
         break;
 
       default:
         logger.log(logger.warn, 'invalid condition: {0}', condition);
         return false;
     }
+
+    result = func(route, split);
   
     if (result === null) {
       logger.log(logger.warn, 'invalid {0} condition: {1}', split[0], condition);
@@ -29,6 +36,15 @@
     logger.log(logger.info, '{0} condition result: {1} === {2}', split[0], condition, result);
     return result;
   };
+
+  function method(route, condition) {
+    if (condition.length !== 2) {
+      return null;
+    }
+
+    let result;
+    return result || false;
+  }
 
   function path(route, condition) {
     if (condition.length !== 3) {

@@ -28,16 +28,16 @@
     let logger = req.logger.create('modules');
     let ctx = context(req, res, logger);
 
-    let modules = (req.router.page.modules || [])
-      .filter(module => req.router.evaluateConditions(module.conditions))
+    let modules = (req.current.page.modules || [])
+      .filter(module => req.current.evaluateConditions(module.conditions))
       .map(data)
       .map(module => new ctx.Context(module));
 
     modules = modules.concat(
-      (req.router.page.content || [])
+      (req.current.page.content || [])
         .filter(section => section.modules.length)
         .map(section => section.modules
-          .filter(module => req.router.evaluateConditions(module.conditions))
+          .filter(module => req.current.evaluateConditions(module.conditions))
           .map(data)
           .map(module => new ctx.SectionContext(module, section)))
         .reduce((a, b) => a.concat(b), []));

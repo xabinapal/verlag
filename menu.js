@@ -9,10 +9,10 @@ class Menu {
     this.data = new Map();
   }
 
-  addPage(route) {
-    let page = route.page.menus.find(p => p.menu.equals(this._id));
-    this.pages.add(route);
-    this.data.set(route.page.id, page);
+  addRouter(router) {
+    let page = router.page.menus.find(p => p.menu.equals(this._id));
+    this.pages.add(router);
+    this.data.set(router.page.id, page);
   }
 
   getPages() {
@@ -31,8 +31,10 @@ class Menu {
 }
 
 class MenuCollection extends Array {
-  constructor(menus) {
+  constructor(routers, menus) {
     super(...menus.map(x => new Menu(x)));
+    routers.forEach(router => router.page.menus
+      .forEach(m => this.findById(m.menu).addRouter(router)));
   }
 
   findById(_id) {

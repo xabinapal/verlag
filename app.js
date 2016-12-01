@@ -29,10 +29,8 @@
     app.use(bodyParser.urlencoded({ extended: false }));
 
     app.use((req, res, next) => {
-      req.logger = logger;
-      req.models = models;
-      res.locals = Object.assign({}, locals);
-      res.locals.modules = new Map();
+      [req.logger, req.models] = [logger, models];
+      res.locals = Object.assign({ modules: new Map() }, locals);
       modules.list().forEach(m => res.locals.modules.set(m, new Map()));
       next();
     });
@@ -51,42 +49,41 @@
 
     app.use((req, res, next) => {
       appLogger.log(appLogger.info, 'processing request: {0}', req.path);
-      models.menu.getAll().then(menus => {
-        res.locals.menus = new menu.MenuCollection(menus);
-        return models.page.getAll();
-      }).then(pages => {
-        res.locals.routers = new router.RouterCollection(pages);
-        res.locals.routers.current = req;
-        req.router = res.locals.routers.current;
-        res.locals.routers.forEach(page =>
-          page.page.menus.forEach(menu =>
-            res.locals.menus.findById(menu.menu).addPage(page)));
 
+      let routers;
+      models.page.getAll().then(pages => {
+        routers = new router.RouterCollection(req, pages);
+        req.current = routers.current;
+        return models.menu.getAll();
+      }).then(menus => {
+        res.locals.menus = new menu.MenuCollection(routers, menus);
+        res.locals.routers = routers;
         next();
       });
     });
 
     app.use((req, res, next) => {
-      if (req.router) {
-        req.router.page.getData().then(page => {
-          let content = page.content.map(section => {
-            if (req.router.evaluateConditions(section.conditions)) {
-              section.content = escapeHtml(section.content);
-              return section;
-            }
-
-            return null;
-          }).filter(section => section !== null);
-
-          page.content = content;
-          req.router.page = page;
-          next();
-        });
-      } else {
+      if (!req.current) {
         let err = new Error('Not found');
         err.status = 404;
         next(err);
+        return;
       }
+
+      req.current.page.getData().then(page => {
+        let content = page.content.map(section => {
+          if (!req.current.evaluateConditions(section.conditions)) {
+            return null;
+          }
+
+          section.content = escapeHtml(section.content);
+          return section;
+        }).filter(section => section !== null);
+
+        page.content = content;
+        req.current.page = page;
+        next();
+      });
     });
 
     app.use(modules.inject);
@@ -94,12 +91,14 @@
     app.use((req, res, next) => {
       res.locals.ajax = req.headers['X-Requested-With'] === 'XMLHttpRequest';
 
+      let message;
       if (res.locals.ajax) {
-        appLogger.log(appLogger.info, 'rendering ajax request {0}', req.path);
+        message = 'rendering ajax request {0}';
       } else {
-        appLogger.log(appLogger.info, 'rendering request {0}', req.path);
+        message = 'rendering request {0}';
       }
 
+      appLogger.log(appLogger.info, message, req.path);
       res.render('page');
     });
 

@@ -70,7 +70,8 @@
         db.once('open', function() {
           serverLogger.log(serverLogger.debug, 'database connection opened');
           ['menu', 'page', 'category', 'publication'].forEach(function(model) {
-            models[model] = require('./models/' + model)(mongoose);
+            let m = path.join(__dirname, 'models', model);
+            models[model] = require(m)(mongoose);
           });
 
           ['markdown', 'form', 'mailer', 'menu', 'catalog'].forEach(module => {

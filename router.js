@@ -108,11 +108,8 @@ class Router {
 }
 
 class RouterCollection extends Array {
-  constructor(routers) {
+  constructor(req, routers) {
     super(...routers.map(x => new Router(x)));
-  }
-
-  set current(req) {
     this._current = this.find(x => x.match(req));
   }
 
