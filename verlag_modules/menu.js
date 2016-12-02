@@ -1,16 +1,17 @@
 ;(function() {
   'use strict';
 
-  const name = 'menu';
-  const actions = [show];
+  module.exports = Module => class Menu extends Module {
+    constructor() {
+      this.show = Module.SECTION;
+    }
 
-  function show(ctx) {
-    ctx.content = ctx.render({
-      menu: ctx.menus.findByKey(ctx.arg('menu'))
-    });
+    show(ctx) {
+      ctx.content = ctx.render({
+        menu: ctx.menus.findByKey(ctx.arg('menu'))
+      });
 
-    ctx.next();
+      ctx.next();
+    }
   }
-
-  module.exports = factory => factory.create(name, actions);
 })();

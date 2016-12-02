@@ -7,38 +7,42 @@
   const nodemailer = require('nodemailer');
   const htmlToText = require('nodemailer-html-to-text').htmlToText;
 
-  function send(ctx) {
-    let subject = ctx.arg('subject');
+  module.exports = Module => class Mailer extends Module {
+    constructor() {
+      this.send.context = Module.PAGE;
+    }
 
-    let formKeys = Object.keys(ctx.body)
-      .filter(key => key.startsWith(ctx.arg('prefix')))
-      .reduce((map, key) => map.set(key.slice(ctx.arg('prefix').length), ctx.body[key]), new Map());
+    send(ctx) {
+      let subject = ctx.arg('subject');
 
-    formKeys.forEach((key, value) => subject = subject.replace(`{${key}}`, value));
+      let formKeys = Object.keys(ctx.body)
+        .filter(key => key.startsWith(ctx.arg('prefix')))
+        .reduce((map, key) => map.set(key.slice(ctx.arg('prefix').length), ctx.body[key]), new Map());
 
-    let content = ctx.render(formKeys);
+      formKeys.forEach((key, value) => subject = subject.replace(`{${key}}`, value));
 
-    let transporter = nodemailer.createTransport();
-    transporter.use('compile', htmlToText());
+      let content = ctx.render(formKeys);
 
-    ctx.logger.log(ctx.logger.debug, 'sending mail...');
+      let transporter = nodemailer.createTransport();
+      transporter.use('compile', htmlToText());
 
-    transporter.sendMail({
-      from: ctx.arg('from'),
-      to: ctx.arg('to'),
-      subject: subject,
-      html: content
-    }, function(err, info) {
-      if (err) {
-        ctx.logger.log(ctx.logger.error, 'can\'t send mail: {0}', err);
-      } else {
-        ctx.logger.log(ctx.logger.info, 'mail sent: {0}', info.response);
-      }
+      ctx.logger.log(ctx.logger.debug, 'sending mail...');
 
-      ctx.set('status', err);
-      ctx.next();
-    })
+      transporter.sendMail({
+        from: ctx.arg('from'),
+        to: ctx.arg('to'),
+        subject: subject,
+        html: content
+      }, function(err, info) {
+        if (err) {
+          ctx.logger.log(ctx.logger.error, 'can\'t send mail: {0}', err);
+        } else {
+          ctx.logger.log(ctx.logger.info, 'mail sent: {0}', info.response);
+        }
+
+        ctx.set('status', err);
+        ctx.next();
+      });
+    }
   }
-
-  module.exports = factory => factory.create(name, actions);
 })();

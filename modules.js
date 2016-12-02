@@ -2,8 +2,26 @@
   'use strict';
 
   const conditional = require('./conditional');
-
   const context = require('./context');
+
+  class Module {
+    get name() {
+      return this.constructor.name;
+    }
+
+    *actions() {
+      let proto = Object.getPropertyOf(this);
+      for (let action of Object.getOwnPropertyNames(proto)) {
+        let method = this[action];
+        if (method instanceof Function && method !== this) {
+          yield method;
+        }
+      }
+    }
+  }
+
+  Module.SECTION = 1 << 0;
+  Module.ROUTER  = 1 << 1;
 
   let injected = new Map();
   let data = module => ({
