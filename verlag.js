@@ -3,6 +3,9 @@
 
   const path = require('path');
 
+  const _models = ['menu', 'page', 'category', 'publication'];
+  const _modules = ['markdown', 'form', 'mailer', 'menu', 'catalog'];
+
   module.exports = (function() {
     let serverDefaults = {
       port: 3000,
@@ -59,7 +62,6 @@
 
         serverLogger.log(serverLogger.info, 'starting server...');
 
-        const modules = require('./modules');
         let models = Object.create(null);
 
         serverLogger.log(serverLogger.debug, 'opening database connection...');
@@ -69,17 +71,14 @@
         db.on('error', () => serverLogger.log(serverLogger.error, 'error opening database connection'));
         db.once('open', function() {
           serverLogger.log(serverLogger.debug, 'database connection opened');
-          ['menu', 'page', 'category', 'publication'].forEach(function(model) {
+          _models.forEach(function(model) {
             let m = path.join(__dirname, 'models', model);
             models[model] = require(m)(mongoose);
           });
 
-          ['markdown', 'form', 'mailer', 'menu', 'catalog'].forEach(module => {
-            let m = path.join(__dirname, 'verlag_modules', module);
-            require(m)(modules);
-          });
-
-          instance = app(appOptions, mainLogger, modules, models);
+          let modules = _modules.map(path.join(__dirname, 'verlag_modules', module));
+          instance = app(appOptions, mainLogger, models);
+          instance.set('modules', modules);
 
           serverLogger.log(serverLogger.debug, 'setting views path: {0}', serverOptions.viewsPath);
           instance.set('views', serverOptions.viewsPath);
