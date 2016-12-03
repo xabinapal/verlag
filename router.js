@@ -74,7 +74,7 @@
         }
       }
 
-      this.logger.log(this.logger.info, 'match found: {0}', this.fullPath);
+      this.logger.log(this.logger.info, 'match found: "{0}"', this.fullPath);
       return true;
     }
 

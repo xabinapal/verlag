@@ -1,9 +1,9 @@
 ;(function() {
   'use strict';
 
-  module.exports = Module => class Menu extends Module {
-    constructor() {
-      this.show = Module.SECTION;
+  module.exports = Module => class menu extends Module {
+    _constructor() {
+      this.show.context = Module.SECTION;
     }
 
     show(ctx) {

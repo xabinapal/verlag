@@ -32,7 +32,7 @@
     const write = (message) => access.info(JSON.parse(message));
 
     const levels = {};
-    
+
     class Logger {
       constructor(name, id) {
         this._name = name;

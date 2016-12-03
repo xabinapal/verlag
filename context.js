@@ -6,10 +6,11 @@
   let _req, _res, _logger;
 
   class Context {
-    constructor(module, section = null) {
-      this.module = module.module;
+    constructor(module, section) {
       this.name = module.data.name;
       this.action = module.data.action;
+      this.exec = module.action;
+      
       this.section = section;
       this.type = section ? 'section' : 'page';
 
@@ -20,7 +21,7 @@
     call(next) {
       this.next = next;
       _logger.log(_logger.debug, 'injecting {0} module {1}.{2}', this.type, this.name, this.action);
-      return this.module(this);
+      return this.exec(this);
     }
 
     get view() {

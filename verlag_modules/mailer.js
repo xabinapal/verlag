@@ -4,9 +4,9 @@
   const nodemailer = require('nodemailer');
   const htmlToText = require('nodemailer-html-to-text').htmlToText;
 
-  module.exports = Module => class Mailer extends Module {
-    constructor() {
-      this.send.context = Module.PAGE;
+  module.exports = Module => class mailer extends Module {
+    _constructor() {
+      this.send.context = Module.ROUTER;
     }
 
     send(ctx) {

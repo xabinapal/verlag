@@ -3,10 +3,10 @@
 
   const recaptcha = require('recaptcha2');
 
-  module.exports = Module => class Form extends Module {
-    constructor() {
+  module.exports = Module => class form extends Module {
+    _constructor() {
       this.show.context = Module.SECTION;
-      this.validate.context = Module.PAGE;
+      this.validate.context = Module.ROUTER;
     }
 
     show(ctx) {

@@ -3,8 +3,8 @@
 
   const showdown = require('showdown');
 
-  module.exports = Module => class Markdown extends Module {
-    constructor() {
+  module.exports = Module => class markdown extends Module {
+    _constructor() {
       this.parse.context = Module.SECTION;
     }
   

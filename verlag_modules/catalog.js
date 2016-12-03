@@ -1,12 +1,12 @@
 ;(function() {
   'use strict';
 
-  module.exports = Module => class Catalog extends Module {
-    constructor() {
+  module.exports = Module => class catalog extends Module {
+    _constructor() {
       this.categories.context = Module.SECTION;
       this.publications.context = Module.SECTION;
       this.publication.context = Module.SECTION;
-      this.latest.context = MODULE.SECTION;
+      this.latest.context = Module.SECTION;
     }
 
     categories(ctx) {

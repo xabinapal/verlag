@@ -16,7 +16,7 @@
 
     let _logger = undefined;
     let _models = undefined;
-    let _modules = new modules.ModuleCollection();
+    let _modules = undefined;
 
     app.set('view getter', view => {
       view = path.join(app.get('views'), view);
@@ -24,39 +24,45 @@
       return view;
     });
 
-    app.set = Object.bind((key, value) => {
-      switch (key) {
+    app.set = function(setting, val) {
+      if (arguments.length !== 2) {
+        return set.bind(app)(...arguments);
+      }
+
+      switch (setting) {
         case 'logger':
-          _logger = value.create('app', true);
+          _logger = val.create('app', true);
           break;
 
         case 'models':
-          _models = value;
+          _models = val;
           break;
 
         case 'modules':
-          _modules = new modules.ModuleCollection(value);
+          _modules = new modules.ModuleCollection(val);
           break;
 
         default:
-          set(key, value);
+           set.bind(app)(...arguments);
+           return;
       }
-    }, app);
+
+      return app;
+    };
 
     app.set('test');
 
     app.disable('x-powered-by');
 
-    app.use((req, res, next) => _logger && _logger.requestLogger(...arguments));
-    app.use((req, res, next) => _logger && _logger.responseLogger(...arguments));
+    //app.use((req, res, next) => _logger ? _logger.requestLogger(req, res, next) : next);
+    //app.use((req, res, next) => _logger ? _logger.responseLogger(req, res, next) : next);
 
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
 
     app.use((req, res, next) => {
       [req.logger, req.models] = [_logger, _models];
-      res.locals = Object.assign({ modules: new Map() }, locals);
-      _modules.list().forEach(m => res.locals.modules.set(m, new Map()));
+      res.locals = locals;
       next();
     });
 
@@ -111,7 +117,7 @@
       });
     });
 
-    app.use(_modules.inject);
+    app.use((req, res, next) => _modules ? _modules.inject(req, res, next) : next());
 
     app.use((req, res, next) => {
       res.locals.ajax = req.headers['X-Requested-With'] === 'XMLHttpRequest';
