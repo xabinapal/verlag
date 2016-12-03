@@ -76,8 +76,11 @@
             models[model] = require(m)(mongoose);
           });
 
-          let modules = _modules.map(path.join(__dirname, 'verlag_modules', module));
-          instance = app(appOptions, mainLogger, models);
+          let modules = _modules.map(require(path.join(__dirname, 'verlag_modules', module)));
+          instance = app(appOptions);
+
+          instance.set('logger', mainLogger);
+          instance.set('models', models);
           instance.set('modules', modules);
 
           serverLogger.log(serverLogger.debug, 'setting views path: {0}', serverOptions.viewsPath);

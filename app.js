@@ -1,7 +1,7 @@
 ;(function() {
   'use strict';
 
-  module.exports = (locals, logger, modules, models) => {
+  module.exports = (locals) => {
     let appLogger = logger.create('app', true);
 
     const bodyParser = require('body-parser');
@@ -12,7 +12,32 @@
     const app = express();
 
     const menu = require('./menu');
+    const modules = require('./modules');
     const router = require('./router');
+
+    let _logger = () => {};
+    let _models = undefined;
+    let _modules = new modules.ModuleCollection();
+
+    const set = app.set;
+    app.set = (key, value) => {
+      switch (key) {
+        case 'logger':
+          _logger = value;
+          break;
+
+        case 'models':
+          _models = value;
+          break;
+
+        case 'modules':
+          _modules = new modules.ModuleCollection(value);
+          break;
+
+        default:
+          set(key, value);
+      }
+    }
 
     app.set('view getter', view => {
       view = path.join(app.get('views'), view);
@@ -29,9 +54,9 @@
     app.use(bodyParser.urlencoded({ extended: false }));
 
     app.use((req, res, next) => {
-      [req.logger, req.models] = [logger, models];
+      [req.logger, req.models] = [_logger, _models];
       res.locals = Object.assign({ modules: new Map() }, locals);
-      modules.list().forEach(m => res.locals.modules.set(m, new Map()));
+      _modules.list().forEach(m => res.locals.modules.set(m, new Map()));
       next();
     });
 
@@ -51,10 +76,10 @@
       appLogger.log(appLogger.info, 'processing request: {0}', req.path);
 
       let routers;
-      models.page.getAll().then(pages => {
+      _models.page.getAll().then(pages => {
         routers = new router.RouterCollection(req, pages);
         req.current = routers.current;
-        return models.menu.getAll();
+        return _models.menu.getAll();
       }).then(menus => {
         res.locals.menus = new menu.MenuCollection(routers, menus);
         res.locals.routers = routers;
@@ -86,7 +111,7 @@
       });
     });
 
-    app.use(modules.inject);
+    app.use(_modules.inject);
 
     app.use((req, res, next) => {
       res.locals.ajax = req.headers['X-Requested-With'] === 'XMLHttpRequest';
