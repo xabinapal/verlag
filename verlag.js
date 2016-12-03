@@ -76,7 +76,7 @@
             models[model] = require(m)(mongoose);
           });
 
-          let modules = _modules.map(require(path.join(__dirname, 'verlag_modules', module)));
+          let modules = _modules.map(m => require(path.join(__dirname, 'verlag_modules', m)));
           instance = app(appOptions);
 
           instance.set('logger', mainLogger);

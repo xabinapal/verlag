@@ -2,28 +2,32 @@
   'use strict';
 
   module.exports = (locals) => {
-    let appLogger = logger.create('app', true);
-
     const bodyParser = require('body-parser');
     const escapeHtml = require('escape-html');
     const express = require('express');
     const path = require('path');
 
-    const app = express();
-
     const menu = require('./menu');
     const modules = require('./modules');
     const router = require('./router');
 
-    let _logger = () => {};
+    const app = express();
+    const set = app.set;
+
+    let _logger = undefined;
     let _models = undefined;
     let _modules = new modules.ModuleCollection();
 
-    const set = app.set;
-    app.set = (key, value) => {
+    app.set('view getter', view => {
+      view = path.join(app.get('views'), view);
+      !path.extname(view) && (view += '.' + app.get('view engine'));
+      return view;
+    });
+
+    app.set = Object.bind((key, value) => {
       switch (key) {
         case 'logger':
-          _logger = value;
+          _logger = value.create('app', true);
           break;
 
         case 'models':
@@ -37,18 +41,14 @@
         default:
           set(key, value);
       }
-    }
+    }, app);
 
-    app.set('view getter', view => {
-      view = path.join(app.get('views'), view);
-      !path.extname(view) && (view += '.' + app.get('view engine'));
-      return view;
-    });
+    app.set('test');
 
     app.disable('x-powered-by');
 
-    app.use(logger.requestLogger);
-    app.use(logger.responseLogger);
+    app.use((req, res, next) => _logger && _logger.requestLogger(...arguments));
+    app.use((req, res, next) => _logger && _logger.responseLogger(...arguments));
 
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
@@ -61,19 +61,19 @@
     });
 
     app.get('/robots.txt', (req, res, next) => {
-      appLogger.log(appLogger.info, 'processing request: /robots.txt');
+      _logger.log(_logger.info, 'processing request: /robots.txt');
       // TODO
       res.end();
     });
 
     app.get('/sitemap.xml', (req, res, next) => {
-      appLogger.log(appLogger.info, 'processing request: /sitemap.xml');
+      _logger.log(_logger.info, 'processing request: /sitemap.xml');
       // TODO
       res.end();
     });
 
     app.use((req, res, next) => {
-      appLogger.log(appLogger.info, 'processing request: {0}', req.path);
+      _logger.log(_logger.info, 'processing request: {0}', req.path);
 
       let routers;
       _models.page.getAll().then(pages => {
@@ -123,12 +123,12 @@
         message = 'rendering request {0}';
       }
 
-      appLogger.log(appLogger.info, message, req.path);
+      _logger.log(_logger.info, message, req.path);
       res.render('page');
     });
 
     app.use((err, req, res, next) => {
-      appLogger.log(appLogger.warn, 'error processing request {0}: {1} {2}', req.path, err.status, err.message);
+      _logger.log(_logger.warn, 'error processing request {0}: {1} {2}', req.path, err.status, err.message);
       res.locals.message = err.message;
       res.locals.error = req.app.get('env') === 'development' ? err : {};
 

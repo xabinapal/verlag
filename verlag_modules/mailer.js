@@ -1,9 +1,6 @@
 ;(function() {
   'use strict';
 
-  const name = 'mailer';
-  const actions = [send];
-  
   const nodemailer = require('nodemailer');
   const htmlToText = require('nodemailer-html-to-text').htmlToText;
 

@@ -50,8 +50,10 @@
           .filter(section => section.modules.length)
           .map(section => section.modules
             .filter(module => req.current.evaluateConditions(module.conditions))
-            .map(data)
-            .map(module => new ctx.SectionContext(module, section)))
+            .map(module => ({
+              data: module,
+              module: this.get(module.name).get(module.action)
+            })).map(module => new ctx.SectionContext(module, section)))
           .reduce((a, b) => a.concat(b), []));
 
       modules.push(null);
@@ -64,6 +66,5 @@
   }
 
   module.exports.Module = Module;
-  module.exports.ModuleFactory = ModuleFactory;
   module.exports.ModuleCollection = ModuleCollection;
 })();

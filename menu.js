@@ -49,4 +49,4 @@
 
   module.exports.Menu = Menu;
   module.exports.MenuCollection = MenuCollection;
-}();
+})();
