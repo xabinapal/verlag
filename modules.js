@@ -4,8 +4,6 @@
   const conditional = require('./conditional');
   const context = require('./context');
 
-  const contexts = ['ROUTER', 'SECTION'];
-
   class Module {
     constructor() {
       this._constructor();
@@ -23,36 +21,20 @@
         .filter(action => action instanceof Function && action !== this);
     }
   }
-
-  contexts.forEach((context, index) => Module[context] = 1 << index);
+  
+  [...context.types.values()]
+    .forEach(ctx => Module[ctx.name] = ctx.value);
 
   let moduleFactory = obj => {
     let module = new (obj(Module));
-    let actions = contexts
-      .map(context => Module[context])
+    let actions = [...context.types.values()]
       .map(context => [
-        context,
+        context.value,
         new Map(module.actions
-          .filter(action => action.context & context)
+          .filter(action => action.context & context.value)
           .map(action => [action.name, action]))]);
 
     return [module.constructor.name, new Map(actions)];
-  };
-
-  let moduleParser = (map, context, data) => {
-    let module = map.get(data.name);
-    if (!module) {
-      console.log('module adre', context, data);
-    }
-    let action = module && module.get(context).get(data.action);
-    if (!action) {
-      console.log(module);
-      console.log('action adre', context, data);
-    }
-    return {
-      data: data,
-      action: action
-    }
   };
 
   class ModuleCollection extends Map {
@@ -61,20 +43,20 @@
     }
 
     inject(req, res, next) {
-      let logger = req.logger.create('modules');
-      let ctx = context(req, res, logger);
+      this.logger = req.logger.create('modules');
+      let ctx = context(req, res, this.logger);
 
       let modules = (req.current.page.modules || [])
         .filter(module => req.current.evaluateConditions(module.conditions))
-        .map(module => moduleParser(this, Module.ROUTER, module))
-        .map(module => new ctx.Context(module));
+        .map(module => this.parser(Module.ROUTER, module))
+        .map(module => new ctx.RouterContext(module));
 
       modules = modules.concat(
         (req.current.page.content || [])
           .filter(section => section.modules.length)
           .map(section => section.modules
             .filter(module => req.current.evaluateConditions(module.conditions))
-            .map(module => moduleParser(this, Module.SECTION, module))
+            .map(module => this.parser(Module.SECTION, module))
             .map(module => new ctx.SectionContext(module, section)))
           .reduce((a, b) => a.concat(b), []));
 
@@ -84,6 +66,23 @@
         let ctx = index < modules.length ? modules[index] : null;
         return ctx ? err => err && next(err) || ctx.call(exec(index + 1)) : next;
       })(0)();
+    }
+
+    parser(context, data) {
+      let module = super.get(data.name);
+      if (!module) {
+        this.logger.log(_logger.error, 'module {0} does not exist', data.name);
+      }
+
+      let action = module && module.get(context).get(data.action);
+      if (!action) {
+        this.logger.log(_logger.error, 'module {0} action {1}.{2} does not exist', data.name, data.action);
+      }
+
+      return {
+        data: data,
+        action: action
+      }
     }
   }
 

@@ -1,26 +1,30 @@
 ;(function() {
   'use strict';
 
-  const pug = require('pug');
+  const pug = require('pug'); 
+  const contexts = ['ROUTER', 'SECTION']
+    .map((ctx, index) => ({
+      name: ctx,
+      value: 1 << index,
+      display: ctx.toLowerCase()
+    })).reduce((dict, ctx) => dict.set(ctx.name, ctx), new Map());
 
   let _req, _res, _logger;
 
   class Context {
-    constructor(module, section) {
+    constructor(module) {
       this.name = module.data.name;
       this.action = module.data.action;
       this.exec = module.action;
-      
-      this.section = section;
-      this.type = section ? 'section' : 'page';
 
       this.args = module.data.args.reduce((map, arg) => map.set(arg.key, arg.value), new Map());
       this.logger = _logger.create(module.data.name).create(module.data.action);
     }
 
     call(next) {
+      _logger.log(_logger.debug, 'injecting {0} module {1}.{2}', this.type.display, this.name, this.action);
+
       this.next = next;
-      _logger.log(_logger.debug, 'injecting {0} module {1}.{2}', this.type, this.name, this.action);
       return this.exec(this);
     }
 
@@ -57,7 +61,23 @@
     }
   }
 
+  [...contexts.values()]
+    .forEach(ctx => Context[ctx.name] = ctx.value);
+
+  class RouterContext extends Context {
+    constructor(module) {
+      super(module);
+      this.type = contexts.get('ROUTER');
+    }
+  }
+
   class SectionContext extends Context {
+    constructor(module, section) {
+      super(module);
+      this.type = contexts.get('SECTION');
+      this.section = section;
+    }
+
     get content() {
       return section.content;
     }
@@ -78,6 +98,8 @@
     _req = req;
     _res = res;
     _logger = logger;
-    return { Context, SectionContext };
+    return { RouterContext, SectionContext };
   };
+
+  module.exports.types = contexts;
 })();

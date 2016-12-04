@@ -1,6 +1,13 @@
 ;(function() {
   'use strict';
 
+  const urlify = require('urlify').create({
+    spaces: '-',
+    nonPrintable: '-',
+    trim: true,
+    toLower: true
+  });
+
   module.exports = Module => class catalog extends Module {
     _constructor() {
       this.categories.context = Module.SECTION;
@@ -40,42 +47,43 @@
 
     publication(ctx) {
       let locals = {
-        category: undefined,
-        publication: undefined
+        publication: undefined,
+        category: undefined
       };
 
-      ctx.models.publication.getById(ctx.routers.current.getParameter('publication'))
+      ctx.models.publication.getByPath(ctx.routers.current.getParameter('publication'))
         .then(publication => {
           locals.publication = publication;
-          return ctx.models.category.getById(publication._id);
+          return ctx.models.category.getById(publication.categoryId);
         }).then(category => {
-          locals.category = publication;
-          ctx.context = ctx.render(locals);
-          next();
+          locals.category = category;
+          ctx.section.title = ctx.section.title.replace(ctx.arg('replace'), category.name);
+          ctx.content = ctx.render(locals);
+          ctx.next();
         });
     }
 
     latest(ctx) {
-      let route = ctx.routers.findByBasePath(ctx.arg('route'));
+      let router = ctx.routers.findByBasePath(ctx.arg('route'));
       let latest = undefined;
 
       ctx.models.publication.getLatest(ctx.arg('count'))
         .then(publications => {
           latest = publications;
           let categories = new Set(latest.map(publication => publication.categoryId.toHexString()));
-          return ctx.models.category.findById(categories);
+          return ctx.models.category.getById(categories);
         }).then(categories => {
           latest.forEach(publication => {
-            let category = (categories || []).find(category => category._id.toHexString() === publication.categoryId);
+            let category = (categories || []).find(category => category._id.equals(publication.categoryId));
             if (category) {
               let params = ctx.arg('params').map(x => ({
                 key: x.key,
                 value: x.value
                   .replace('{category}', category.path)
-                  .replace('{publication}', publication.insertId)
+                  .replace('{publication}', urlify(publication.name))
               }));
 
-              x.route = route.create(params);
+              publication.route = router.create(params);
             }
           });
 

@@ -91,6 +91,10 @@
       }
     }
 
+    get title() {
+      return this.page.title || this.page.content.find(x => x.main).title;
+    }
+
     getParameter(key) {
       return key && this.parameters.get(key) || undefined;
     }
@@ -119,7 +123,7 @@
     }
 
     findByBasePath(basePath) {
-      return this.find(page => page.basePath === basePath);
+      return super.find(router => router.page.basePath === basePath);
     }
   }
 

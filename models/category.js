@@ -5,6 +5,8 @@
   const tableName = 'categories';
 
   module.exports = function(mongoose) {
+    const ObjectId = mongoose.Schema.Types.ObjectId;
+
     let schema = new mongoose.Schema({
       path: { type: String, unique: true },
       name: { type: String, required: true },
@@ -18,8 +20,8 @@
     };
 
     schema.statics.getById = function(ids) {
-      return ids instanceof Array
-        ? this.find({ _id: { "$in": ids }}).exec()
+      return ids instanceof Set
+        ? this.find({ _id: { '$in': Array.from(ids) }}).exec()
         : this.findOne({ _id: ids }).exec();
     }
 
