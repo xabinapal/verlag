@@ -19,28 +19,27 @@
     categories(ctx) {
       ctx.models.category.getAll()
         .then(categories => {
-          ctx.content = ctx.render({
-            current: ctx.routers.current,
-            categories: categories
+          categories.forEach(category => {
+            category.route = ctx.routers.current.create([{
+              key: 'category',
+              value: category.path
+            }]);
           });
 
+          ctx.content = ctx.render({ categories });
           ctx.next();
         });
     }
 
     publications(ctx) {
+      ctx.subtitleLink = ctx.routers.current.create();
       ctx.models.category.getByPath(ctx.routers.current.getParameter('category'))
         .then(category => {
           ctx.section.title = ctx.section.title.replace(ctx.arg('replace'), category.get('name'));
           ctx.section.category = category;
           return ctx.models.publication.getByCategory(category);
         }).then(publications => {
-          ctx.content = ctx.render({
-            current: ctx.routers.current,
-            category: ctx.section.category,
-            publications: publications
-          });
-
+          ctx.content = ctx.render({ publications });
           ctx.next();
         });
     }
@@ -50,6 +49,10 @@
         publication: undefined,
         category: undefined
       };
+
+      ctx.subtitleLink = ctx.routers.current.create([{
+        category: ctx.routers.current.getParameter('category')
+      }]);
 
       ctx.models.publication.getByPath(ctx.routers.current.getParameter('publication'))
         .then(publication => {
@@ -64,16 +67,18 @@
     }
 
     latest(ctx) {
-      let router = ctx.routers.findByBasePath(ctx.arg('route'));
-      let latest = undefined;
+      let locals = {
+        latest: undefined,
+        count: ctx.arg('count')
+      };
 
       ctx.models.publication.getLatest(ctx.arg('count'))
         .then(publications => {
-          latest = publications;
-          let categories = new Set(latest.map(publication => publication.categoryId.toHexString()));
+          locals.latest = publications;
+          let categories = new Set(publications.map(publication => publication.categoryId.toHexString()));
           return ctx.models.category.getById(categories);
         }).then(categories => {
-          latest.forEach(publication => {
+          locals.latest.forEach(publication => {
             let category = (categories || []).find(category => category._id.equals(publication.categoryId));
             if (category) {
               let params = ctx.arg('params').map(x => ({
@@ -83,15 +88,11 @@
                   .replace('{publication}', urlify(publication.name))
               }));
 
-              publication.route = router.create(params);
+              publication.route = ctx.routers.findByBasePath(ctx.arg('route')).create(params);
             }
           });
 
-          ctx.content = ctx.render({
-            publications: latest,
-            count: ctx.arg('count')
-          });
-
+          ctx.content = ctx.render(locals);
           ctx.next();
         });
     }

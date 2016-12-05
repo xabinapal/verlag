@@ -47,6 +47,7 @@
       let ctx = context(req, res, this.logger);
 
       let modules = (req.current.page.modules || [])
+        .filter(module => !module.postExecute)
         .filter(module => req.current.evaluateConditions(module.conditions))
         .map(module => this.parser(Module.ROUTER, module))
         .map(module => new ctx.RouterContext(module));
@@ -59,6 +60,13 @@
             .map(module => this.parser(Module.SECTION, module))
             .map(module => new ctx.SectionContext(module, section)))
           .reduce((a, b) => a.concat(b), []));
+
+      modules.concat(
+        (req.current.page.modules || [])
+          .filter(module => module.postExecute)
+          .filter(module => req.current.evaluateConditions(module.conditions))
+          .map(module => this.parser(Module.ROUTER, module))
+          .map(module => new ctx.RouterContext(module)));
 
       modules.push(null);
 

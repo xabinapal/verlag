@@ -23,15 +23,19 @@
           value: Object
         }
       ],
-      conditions: [String]
+      conditions: [String],
+      postExecute: Boolean
     });
 
     let linkSchema = new mongoose.Schema({
-      basePath: { type: String, required: true },
-      path: [{
-        key: { type: String, unique: true, required: true },
-        value: { type: String, required: true }
-      }]
+      path: String,
+      route: {
+        basePath: { type: String, required: true },
+        path: [{
+          key: { type: String, unique: true, required: true },
+          value: { type: String, required: true }
+        }]
+      }
     });
 
     let contentSchema = new mongoose.Schema({

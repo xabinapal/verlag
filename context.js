@@ -52,6 +52,10 @@
       return _res.locals;
     }
 
+    set subtitleLink(value) {
+      _req.current.subtitleLink = value;
+    }
+
     arg(arg) {
       return this.args.get(arg);
     }
