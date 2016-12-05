@@ -8,7 +8,7 @@
     const path = require('path');
 
     const menu = require('./menu');
-    const modules = require('./modules');
+    const extensions = require('./extensions');
     const router = require('./router');
 
     const app = express();
@@ -16,7 +16,7 @@
 
     let _logger = undefined;
     let _models = undefined;
-    let _modules = undefined;
+    let _extensions = undefined;
 
     app.set('view getter', view => {
       view = path.join(app.get('views'), view);
@@ -38,8 +38,8 @@
           _models = val;
           break;
 
-        case 'modules':
-          _modules = new modules.ModuleCollection(val);
+        case 'extensions':
+          _extensions = new extensions.ExtensionCollection(val);
           break;
 
         default:
@@ -117,7 +117,7 @@
       });
     });
 
-    app.use((req, res, next) => _modules ? _modules.inject(req, res, next) : next());
+    app.use((req, res, next) => _extensions ? _extensions.inject(req, res, next) : next());
 
     app.use((req, res, next) => {
       res.locals.ajax = req.headers['X-Requested-With'] === 'XMLHttpRequest';

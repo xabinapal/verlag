@@ -14,7 +14,7 @@
       optional: Boolean
     });
 
-    let moduleSchema = new mongoose.Schema({
+    let extensionSchema = new mongoose.Schema({
       name: { type: String, required: true },
       action: { type: String, required: true },
       args: [
@@ -44,7 +44,7 @@
       subtitle: String,
       subtitleLink: linkSchema,
       content: String,
-      modules: [moduleSchema],
+      extensions: [extensionSchema],
       conditions: [String]
     });
 
@@ -60,7 +60,7 @@
       title: { type: String, required: true },
       subtitle: String,
       subtitleLink: linkSchema,
-      modules: [moduleSchema],
+      extensions: [extensionSchema],
       content: [contentSchema],
       menus: [menuSchema]
     });

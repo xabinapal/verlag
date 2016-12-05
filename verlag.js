@@ -4,7 +4,7 @@
   const path = require('path');
 
   const _models = ['menu', 'page', 'category', 'publication'];
-  const _modules = ['markdown', 'form', 'mailer', 'menu', 'catalog'];
+  const _extensions = ['markdown', 'form', 'mailer', 'menu', 'catalog'];
 
   module.exports = (function() {
     let serverDefaults = {
@@ -76,12 +76,12 @@
             models[model] = require(m)(mongoose);
           });
 
-          let modules = _modules.map(m => require(path.join(__dirname, 'verlag_modules', m)));
+          let extensions = _extensions.map(m => require(path.join(__dirname, 'extensions', m)));
           instance = app(appOptions);
 
           instance.set('logger', mainLogger);
           instance.set('models', models);
-          instance.set('modules', modules);
+          instance.set('extensions', extensions);
 
           serverLogger.log(serverLogger.debug, 'setting views path: {0}', serverOptions.viewsPath);
           instance.set('views', serverOptions.viewsPath);
