@@ -54,8 +54,8 @@
 
     app.disable('x-powered-by');
 
-    //app.use((req, res, next) => _logger ? _logger.requestLogger(req, res, next) : next);
-    //app.use((req, res, next) => _logger ? _logger.responseLogger(req, res, next) : next);
+    app.use((req, res, next) => _logger ? _logger.requestLogger(req, res, next) : next());
+    app.use((req, res, next) => _logger ? _logger.responseLogger(req, res, next) : next());
 
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));

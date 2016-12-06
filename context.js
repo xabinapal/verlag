@@ -70,15 +70,16 @@
 
   class RouterContext extends Context {
     constructor(module) {
-      super(module);
       this.type = contexts.get('ROUTER');
     }
   }
 
+  RouterContext.context = Context.ROUTER;
+  RouterContext.prototype.type = contexts.get('ROUTER');
+
   class SectionContext extends Context {
     constructor(module, section) {
       super(module);
-      this.type = contexts.get('SECTION');
       this.section = section;
     }
 
@@ -98,11 +99,16 @@
     }
   }
 
+  SectionContext.context = Context.SECTION;
+  SectionContext.prototype.type = contexts.get('SECTION');
+
   module.exports = (req, res, logger) => {
     _req = req;
     _res = res;
     _logger = logger;
-    return { RouterContext, SectionContext };
+
+    return [RouterContext, SectionContext]
+      .reduce((map, ctx) => map.set(ctx.context, ctx), new Map());
   };
 
   module.exports.types = contexts;

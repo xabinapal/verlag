@@ -48,29 +48,24 @@
 
     inject(req, res, next) {
       this.logger = req.logger.create('extensions');
-      let ctx = context(req, res, this.logger);
+      this.ctx = context(req, res, this.logger);
+      this.req = req;
 
-      let extensions = (req.current.page.extensions || [])
-        .filter(extension => !extension.postExecute)
-        .filter(extension => req.current.evaluateConditions(extension.conditions))
-        .map(extension => this.parser(Extension.ROUTER, extension))
-        .map(extension => new ctx.RouterContext(extension));
+      let extensions = this.select(
+        Extension.ROUTER,
+        req.current.page.extensions,
+        extension => !extension.postExecute);
 
       extensions = extensions.concat(
         (req.current.page.content || [])
           .filter(section => section.extensions.length)
-          .map(section => section.extensions
-            .filter(extension => req.current.evaluateConditions(extension.conditions))
-            .map(extension => this.parser(Extension.SECTION, extension))
-            .map(extension => new ctx.SectionContext(extension, section)))
+          .map(section => this.select(Extension.SECTION, section.extensions, null, section))
           .reduce((a, b) => a.concat(b), []));
 
-      extensions.concat(
-        (req.current.page.extensions || [])
-          .filter(extension => extension.postExecute)
-          .filter(extension => req.current.evaluateConditions(extension.conditions))
-          .map(extension => this.parser(Extension.ROUTER, extension))
-          .map(extension => new ctx.RouterContext(extension)));
+      extensions.concat(this.select(
+        Extension.ROUTER,
+        req.current.page.extensions,
+        extension => extension.postExecute));
 
       extensions.push(null);
 
@@ -78,6 +73,14 @@
         let ctx = index < extensions.length ? extensions[index] : null;
         return ctx ? err => err && next(err) || ctx.call(exec(index + 1)) : next;
       })(0)();
+    }
+
+    select(type, extensions, condition, section) {
+      return (extensions || [])
+        .filter(extension => condition ? condition(extension) : true)
+        .filter(extension => this.req.current.evaluateConditions(extension.conditions))
+        .map(extension => this.parser(type, extension))
+        .map(extension => new (this.ctx.get(type))(extension, section));
     }
 
     parser(context, data) {

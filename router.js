@@ -79,7 +79,6 @@
     }
 
     create(parameters) {
-      console.log(parameters);
       let params = (parameters || []).reduce((obj, val) => (obj[val.key] = val.value) && obj, Object.create(null));
 
       try {
