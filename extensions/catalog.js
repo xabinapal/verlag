@@ -32,7 +32,8 @@
     }
 
     publications(ctx) {
-      ctx.subtitleLink = ctx.routers.current.create();
+      ctx.set('subtitleLink', ctx.routers.current.create());
+      
       ctx.models.category.getByPath(ctx.routers.current.getParameter('category'))
         .then(category => {
           ctx.section.title = ctx.section.title.replace(ctx.arg('replace'), category.get('name'));
@@ -50,9 +51,11 @@
         category: undefined
       };
 
-      ctx.subtitleLink = ctx.routers.current.create([{
+      let subtitleLink = ctx.routers.current.create([{
         category: ctx.routers.current.getParameter('category')
       }]);
+
+      ctx.set('subtitleLink', subtitleLink);
 
       ctx.models.publication.getByPath(ctx.routers.current.getParameter('publication'))
         .then(publication => {

@@ -1,6 +1,8 @@
 ;(function() {
   'use strict';
 
+  const stringcase = require('stringcase');
+
   const conditional = require('./conditional');
   const context = require('./context');
 
@@ -10,11 +12,7 @@
     }
 
     get name() {
-      // camelCase
-      let name = this.constructor.name.replace(/(?:^\w|[A-Z]|\b\w)/g, (letter, index) => {
-        return index == 0 ? letter.toLowerCase() : letter.toUpperCase();
-      }).replace(/\s+/g, '');
-      return name;
+      return stringcase.camelcase(this.constructor.name);
     }
 
     get actions() {
@@ -62,12 +60,10 @@
           .map(section => this.select(Extension.SECTION, section.extensions, null, section))
           .reduce((a, b) => a.concat(b), []));
 
-      extensions.concat(this.select(
+      extensions = extensions.concat(this.select(
         Extension.ROUTER,
         req.current.page.extensions,
         extension => extension.postExecute));
-
-      extensions.push(null);
 
       (function exec(index) {
         let ctx = index < extensions.length ? extensions[index] : null;

@@ -9,20 +9,22 @@
       display: ctx.toLowerCase()
     })).reduce((dict, ctx) => dict.set(ctx.name, ctx), new Map());
 
+  let findContextByValue = val => [...contexts.entries()].find(x => x[1].value === val)[1];
+
   let _req, _res, _logger;
 
   class Context {
-    constructor(module) {
-      this.name = module.data.name;
-      this.action = module.data.action;
-      this.exec = module.action;
+    constructor(extension) {
+      this.name = extension.data.name;
+      this.action = extension.data.action;
+      this.exec = extension.action;
 
-      this.args = module.data.args.reduce((map, arg) => map.set(arg.key, arg.value), new Map());
-      this.logger = _logger.create(module.data.name).create(module.data.action);
+      this.args = extension.data.args.reduce((map, arg) => map.set(arg.key, arg.value), new Map());
+      this.logger = _logger.create(extension.data.name).create(extension.data.action);
     }
 
     call(next) {
-      _logger.log(_logger.debug, 'injecting {0} module {1}.{2}', this.type.display, this.name, this.action);
+      _logger.log(_logger.debug, 'injecting {0} extension {1}.{2}', findContextByValue(this.type).display, this.name, this.action);
 
       this.next = next;
       return this.exec(this);
@@ -52,25 +54,30 @@
       return _res.locals;
     }
 
-    set subtitleLink(value) {
-      _req.current.subtitleLink = value;
-    }
-
     arg(arg) {
       return this.args.get(arg);
     }
 
     set(prop, arg) {
-      res.locals.modules.get(this.name).set(prop, arg);
+      if (!_res.locals.extensions) {
+        _res.locals.extensions = new Map();
+      }
+
+      if (!_res.locals.extensions.has(this.name)) {
+        _res.locals.extensions.set(this.name, new Map());
+      }
+
+      _res.locals.extensions.get(this.name).set(prop, arg);
     }
   }
 
   [...contexts.values()]
-    .forEach(ctx => Context[ctx.name] = ctx.value);
+    .forEach(ctx => Context[ctx.name] = Context.prototype[ctx.name] = ctx.value);
 
   class RouterContext extends Context {
     constructor(module) {
-      this.type = contexts.get('ROUTER');
+      super(module);
+      this.type = Context.ROUTER;
     }
   }
 
@@ -80,6 +87,7 @@
   class SectionContext extends Context {
     constructor(module, section) {
       super(module);
+      this.type = Context.SECTION;
       this.section = section;
     }
 

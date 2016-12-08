@@ -4,7 +4,7 @@
   const path = require('path');
 
   const _models = ['menu', 'page', 'category', 'publication'];
-  const _extensions = ['markdown', 'form', 'mailer', 'menu', 'catalog'];
+  const _extensions = ['page', 'markdown', 'form', 'mailer', 'catalog'];
 
   module.exports = (function() {
     let serverDefaults = {
