@@ -42,7 +42,7 @@
       main: String,
       title: String,
       subtitle: String,
-      subtitleLink: linkSchema,
+      subtitleLink: { type: linkSchema, default: null },
       content: String,
       extensions: [extensionSchema],
       conditions: [String]
@@ -59,7 +59,7 @@
       path: [pathSchema],
       title: { type: String, required: true },
       subtitle: String,
-      subtitleLink: linkSchema,
+      subtitleLink: { type: linkSchema, default: null },
       extensions: [extensionSchema],
       content: [contentSchema],
       menus: [menuSchema]

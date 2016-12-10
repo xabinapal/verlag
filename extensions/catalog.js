@@ -28,21 +28,21 @@
 
           ctx.content = ctx.render({ categories });
           ctx.next();
-        });
+        }, ctx.err);
     }
 
     publications(ctx) {
       ctx.set('subtitleLink', ctx.routers.current.create());
-      
+
       ctx.models.category.getByPath(ctx.routers.current.getParameter('category'))
         .then(category => {
           ctx.section.title = ctx.section.title.replace(ctx.arg('replace'), category.get('name'));
           ctx.section.category = category;
           return ctx.models.publication.getByCategory(category);
-        }).then(publications => {
+        }, ctx.err).then(publications => {
           ctx.content = ctx.render({ publications });
           ctx.next();
-        });
+        }, ctx.err);
     }
 
     publication(ctx) {
@@ -52,21 +52,22 @@
       };
 
       let subtitleLink = ctx.routers.current.create([{
-        category: ctx.routers.current.getParameter('category')
+        key: "category",
+        "value": ctx.routers.current.getParameter('category')
       }]);
-
+      
       ctx.set('subtitleLink', subtitleLink);
 
       ctx.models.publication.getByPath(ctx.routers.current.getParameter('publication'))
         .then(publication => {
           locals.publication = publication;
           return ctx.models.category.getById(publication.categoryId);
-        }).then(category => {
+        }, ctx.err).then(category => {
           locals.category = category;
           ctx.section.title = ctx.section.title.replace(ctx.arg('replace'), category.name);
           ctx.content = ctx.render(locals);
           ctx.next();
-        });
+        }, ctx.err);
     }
 
     latest(ctx) {
@@ -80,7 +81,7 @@
           locals.latest = publications;
           let categories = new Set(publications.map(publication => publication.categoryId.toHexString()));
           return ctx.models.category.getById(categories);
-        }).then(categories => {
+        }, ctx.err).then(categories => {
           locals.latest.forEach(publication => {
             let category = (categories || []).find(category => category._id.equals(publication.categoryId));
             if (category) {
@@ -93,7 +94,7 @@
 
               publication.route = ctx.routers.findByBasePath(ctx.arg('route')).create(params);
             }
-          });
+          }, ctx.err);
 
           ctx.content = ctx.render(locals);
           ctx.next();

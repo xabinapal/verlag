@@ -1,7 +1,7 @@
 ;(function() {
   'use strict';
 
-  module.exports = (locals) => {
+  module.exports = locals => {
     const bodyParser = require('body-parser');
     const escapeHtml = require('escape-html');
     const express = require('express');
@@ -60,6 +60,16 @@
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
 
+    app.use(function (req, res, next) {
+      process.on('unhandledRejection', function(reason, p) {
+        let err = new Error(reason);
+        err.status = 500;
+        return next(err);
+      });
+
+      next();
+    });
+
     app.use((req, res, next) => {
       [req.logger, req.models] = [_logger, _models];
       res.locals = locals;
@@ -97,8 +107,7 @@
       if (!req.current) {
         let err = new Error('Not found');
         err.status = 404;
-        next(err);
-        return;
+        return next(err);
       }
 
       req.current.page.getData().then(page => {
@@ -130,16 +139,20 @@
       }
 
       _logger.log(_logger.info, message, req.path);
-      res.render('page');
+      res.render(app.get('page view'));
     });
 
     app.use((err, req, res, next) => {
+      let status = err.status || 500;
+      let views = app.get('error views');
+      let view = views[status] || views.other;
+
       _logger.log(_logger.warn, 'error processing request {0}: {1} {2}', req.path, err.status, err.message);
       res.locals.message = err.message;
-      res.locals.error = req.app.get('env') === 'development' ? err : {};
+      res.locals.error = app.get('env') === 'development' ? err : {};
 
       res.status(err.status || 500);
-      res.render('error');
+      res.render(view);
     });
 
     return app;

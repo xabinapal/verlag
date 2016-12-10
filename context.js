@@ -30,6 +30,26 @@
       return this.exec(this);
     }
 
+    arg(arg) {
+      return this.args.get(arg);
+    }
+
+    set(prop, arg) {
+      if (!_res.locals.extensions) {
+        _res.locals.extensions = new Map();
+      }
+
+      if (!_res.locals.extensions.has(this.name)) {
+        _res.locals.extensions.set(this.name, new Map());
+      }
+
+      _res.locals.extensions.get(this.name).set(prop, arg);
+    }
+
+    err() {
+      console.log(arguments);
+    }
+
     get view() {
       return _req.app.get('view getter')(this.args.get('view'));
     }
@@ -52,22 +72,6 @@
 
     get locals() {
       return _res.locals;
-    }
-
-    arg(arg) {
-      return this.args.get(arg);
-    }
-
-    set(prop, arg) {
-      if (!_res.locals.extensions) {
-        _res.locals.extensions = new Map();
-      }
-
-      if (!_res.locals.extensions.has(this.name)) {
-        _res.locals.extensions.set(this.name, new Map());
-      }
-
-      _res.locals.extensions.get(this.name).set(prop, arg);
     }
   }
 

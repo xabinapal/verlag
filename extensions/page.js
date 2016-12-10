@@ -21,15 +21,18 @@
       let extension = ctx.arg('extension');
       let link;
 
-      console.log('entro');
-
       if (route) {
         link = route;
       } else if (local) {
         link = ctx.locals[local];
       } else if (extension) {
         link = ctx.locals.extensions.get(extension.extension).get(extension.key);
+      } else {
+        ctx.next();
+        return;
       }
+
+      console.log(link);
 
       switch (ctx.type) {
         case ctx.ROUTER:

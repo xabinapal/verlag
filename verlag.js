@@ -17,7 +17,9 @@
       viewEngine: 'pug',
 
       pageView: 'page',
-      errorView: 'error',
+      errorViews: {
+        other: 'error'
+      },
 
       logFile: null
     };
@@ -90,8 +92,8 @@
 
           serverLogger.log(serverLogger.debug, 'setting page view: {0}', serverOptions.pageView);
           instance.set('page view', serverOptions.pageView);
-          serverLogger.log(serverLogger.debug, 'setting error view: {0}', serverOptions.errorView);
-          instance.set('error view', serverOptions.errorView);
+          serverLogger.log(serverLogger.debug, 'setting error views: {0}', serverOptions.errorViews);
+          instance.set('error views', serverOptions.errorViews);
 
           server = http.createServer(instance);
           server.listen(serverOptions.port);
