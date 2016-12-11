@@ -1,6 +1,7 @@
 ;(function() {
   'use strict';
 
+  const extend = require('extend');
   const path = require('path');
 
   const _models = ['menu', 'page', 'category', 'publication'];
@@ -44,17 +45,18 @@
 
         mongoose = require('mongoose');
         mongoose.Promise = global.Promise;
-
-        serverOptions = Object.assign({}, serverDefaults);
-        appOptions = Object.assign({}, appDefaults);
       }
 
       setServerOptions(opts) {
-        Object.assign(serverOptions, opts);
+        serverOptions = {};
+        extend(true, serverOptions, serverDefaults);
+        extend(true, serverOptions, opts);
       }
 
       setAppOptions(opts) {
-        Object.assign(appOptions, opts);
+        appOptions = {};
+        extend(true, appOptions, appDefaults);
+        extend(true, appOptions, opts);
       }
 
       startServer() {
@@ -85,14 +87,9 @@
           instance.set('models', models);
           instance.set('extensions', extensions);
 
-          serverLogger.log(serverLogger.debug, 'setting views path: {0}', serverOptions.viewsPath);
           instance.set('views', serverOptions.viewsPath);
-          serverLogger.log(serverLogger.debug, 'setting views engine: {0}', serverOptions.viewEngine);
           instance.set('view engine', serverOptions.viewEngine);
-
-          serverLogger.log(serverLogger.debug, 'setting page view: {0}', serverOptions.pageView);
           instance.set('page view', serverOptions.pageView);
-          serverLogger.log(serverLogger.debug, 'setting error views: {0}', serverOptions.errorViews);
           instance.set('error views', serverOptions.errorViews);
 
           server = http.createServer(instance);

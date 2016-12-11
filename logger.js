@@ -33,6 +33,20 @@
 
     const levels = {};
 
+    const request = morganJson({
+      remoteAddr: ':remote-addr',
+      remoteUser: ':remote-user',
+      date: ':date[clf]',
+      method: ':method',
+      url: ':url',
+      httpVersion: ':http-version',
+      status: ':status',
+      resultLength: ':res[content-length]',
+      referrer: ':referrer',
+      userAgent: ':user-agent',
+      responseTime: ':response-time'
+    });
+
     class Logger {
       constructor(name, id) {
         this._name = name;
@@ -52,6 +66,14 @@
 
         names.reverse();
         return names.join(':');
+      }
+
+      get requestLogger() {
+        return morgan(request, { immediate: true, stream: { write } });
+      }
+
+      get responseLogger() {
+        return morgan(request, { stream: { write } });
       }
 
       create(name, id) {
@@ -88,26 +110,6 @@
       Logger[x] = levels[x];
       Logger.prototype[x] = levels[x];
     });
-
-    const request = morganJson({
-      remoteAddr: ':remote-addr',
-      remoteUser: ':remote-user',
-      date: ':date[clf]',
-      method: ':method',
-      url: ':url',
-      httpVersion: ':http-version',
-      status: ':status',
-      resultLength: ':res[content-length]',
-      referrer: ':referrer',
-      userAgent: ':user-agent',
-      responseTime: ':response-time'
-    });
-
-    Logger.requestLogger = morgan(request, { immediate: true, stream: { write } });
-    Logger.prototype.requestLogger = Logger.requestLogger;
-
-    Logger.responseLogger = morgan(request, { stream: { write } });
-    Logger.prototype.responseLogger = Logger.responseLogger;
 
     return Logger;
   };

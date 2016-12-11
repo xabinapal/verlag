@@ -43,14 +43,12 @@
           break;
 
         default:
-           set.bind(app)(...arguments);
-           return;
+          _logger && _logger.log(_logger.debug, 'setting {0}: {1}', setting, val);
+          return set.bind(app)(...arguments);
       }
 
       return app;
     };
-
-    app.set('test');
 
     app.disable('x-powered-by');
 
@@ -71,26 +69,23 @@
     });
 
     app.use((req, res, next) => {
+      _logger.log(_logger.info, 'processing request: {0}', req.path);
       [req.logger, req.models] = [_logger, _models];
       res.locals = locals;
       next();
     });
 
     app.get('/robots.txt', (req, res, next) => {
-      _logger.log(_logger.info, 'processing request: /robots.txt');
       // TODO
       res.end();
     });
 
     app.get('/sitemap.xml', (req, res, next) => {
-      _logger.log(_logger.info, 'processing request: /sitemap.xml');
       // TODO
       res.end();
     });
 
     app.use((req, res, next) => {
-      _logger.log(_logger.info, 'processing request: {0}', req.path);
-
       let routers;
       _models.page.getAll().then(pages => {
         routers = new router.RouterCollection(req, pages);
@@ -147,11 +142,11 @@
       let views = app.get('error views');
       let view = views[status] || views.other;
 
-      _logger.log(_logger.warn, 'error processing request {0}: {1} {2}', req.path, err.status, err.message);
+      _logger.log(_logger.warn, 'error processing request {0}: {1} {2}', req.path, status, err.message);
       res.locals.message = err.message;
       res.locals.error = app.get('env') === 'development' ? err : {};
 
-      res.status(err.status || 500);
+      res.status(status || 500);
       res.render(view);
     });
 
