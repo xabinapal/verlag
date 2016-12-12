@@ -86,14 +86,17 @@
     });
 
     app.use((req, res, next) => {
-      let routers;
-      _models.page.getAll().then(pages => {
-        routers = new router.RouterCollection(req, pages);
-        req.current = routers.current;
-        return _models.menu.getAll();
-      }).then(menus => {
-        res.locals.menus = new menu.MenuCollection(routers, menus);
-        res.locals.routers = routers;
+      let routers = _models.page.getAll();
+      let menus = _models.menu.getAll();
+
+      Promise.all([routers, menus]).then(results => {
+        _logger.log(_logger.debug, '{0} router(s) found', results[0].length);
+        res.locals.routers = new router.RouterCollection(req, results[0]);
+        req.current = res.locals.routers.current;
+
+        _logger.log(_logger.debug, '{0} menu(s) found', results[1].length);
+        res.locals.menus = new menu.MenuCollection(res.locals.routers, results[1]);
+
         next();
       });
     });
@@ -115,6 +118,7 @@
           return section;
         }).filter(section => section !== null);
 
+        _logger.log(_logger.debug, '{0} section(s) found in current route', content.length);
         page.content = content;
         req.current.page = page;
         next();
@@ -145,7 +149,7 @@
       _logger.log(_logger.warn, 'error processing request {0}: {1} {2}', req.path, status, err.message);
       res.locals.message = err.message;
       res.locals.error = app.get('env') === 'development' ? err : {};
-
+      
       res.status(status || 500);
       res.render(view);
     });

@@ -41,7 +41,7 @@
 
   class ExtensionCollection extends Map {
     constructor(extensions) {
-      super((extensions || []).map(extensionFactory));
+      super((extensions || []).map(extensionFactory));
     }
 
     inject(req, res, next) {
@@ -66,9 +66,11 @@
         extension => extension.postExecute));
 
       (function exec(index) {
-        let ctx = index < extensions.length ? extensions[index] : null;
-        return ctx ? err => err && next(err) || ctx.call(exec(index + 1)) : next;
-      })(0)();
+        return status => {
+          let ctx = index < extensions.length ? extensions[index] : null;
+          return ctx ? err => err && next(err) || ctx.call(exec(index + 1)) : next;
+        }
+      })(0)(context.SUCCESS)();
     }
 
     select(type, extensions, condition, section) {

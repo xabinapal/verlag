@@ -9,6 +9,10 @@
       display: ctx.toLowerCase()
     })).reduce((dict, ctx) => dict.set(ctx.name, ctx), new Map());
 
+  const statuses = ['SUCCESS', 'ERROR', 'ABORT']
+    .map(status => [status, Symbol(status)])
+    .reduce((map, status) => map.set(status[0], status[1]), new Map());
+
   let findContextByValue = val => [...contexts.entries()].find(x => x[1].value === val)[1];
 
   let _req, _res, _logger;
@@ -21,12 +25,14 @@
 
       this.args = extension.data.args.reduce((map, arg) => map.set(arg.key, arg.value), new Map());
       this.logger = _logger.create(extension.data.name).create(extension.data.action);
+      this._status = this.constructor.SUCCESS;
     }
 
     call(next) {
-      _logger.log(_logger.debug, 'injecting {0} extension {1}.{2}', findContextByValue(this.type).display, this.name, this.action);
+      let context = findContextByValue(this.type).display;
+      _logger.log(_logger.debug, 'injecting {0} extension {1}.{2}', context, this.name, this.action);
 
-      this.next = next;
+      this._next = next;
       return this.exec(this);
     }
 
@@ -46,8 +52,16 @@
       _res.locals.extensions.get(this.name).set(prop, arg);
     }
 
-    err() {
-      console.log(arguments);
+    set status(status) {
+      if (!status in Object.keys(statuses).map(x => statuses[x])) {
+        throw new Error();
+      }
+
+      this._status = status;
+    }
+
+    get next() {
+      return this._next(this._status);
     }
 
     get view() {
@@ -56,6 +70,10 @@
 
     get models() {
       return _req.models;
+    }
+
+    get locals() {
+      return _res.locals;
     }
 
     get routers() {
@@ -69,14 +87,13 @@
     get body() {
       return _req.body;
     }
-
-    get locals() {
-      return _res.locals;
-    }
   }
 
   [...contexts.values()]
     .forEach(ctx => Context[ctx.name] = Context.prototype[ctx.name] = ctx.value);
+
+  [...statuses.entries()]
+    .forEach(status => Context[status[0]] = Context.prototype[status[0]] = status[1]);
 
   class RouterContext extends Context {
     constructor(module) {
@@ -123,5 +140,6 @@
       .reduce((map, ctx) => map.set(ctx.context, ctx), new Map());
   };
 
+  module.exports.statuses = statuses;
   module.exports.types = contexts;
 })();
