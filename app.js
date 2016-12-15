@@ -20,8 +20,8 @@
     let _extensions = undefined;
 
     app.set('view getter', view => {
-      view = path.join(app.get('views'), view);
-      !path.extname(view) && (view += '.' + app.get('view engine'));
+      view = path.join(app.get('views').path, view);
+      !path.extname(view) && (view += '.' + app.get('views').engine);
       return view;
     });
 
@@ -143,20 +143,21 @@
       }
 
       _logger.log(_logger.info, message, req.path);
-      res.render(app.get('page view'));
+      let view = app.get('views').page;
+      res.render(app.get('view getter')(view));
     });
 
     app.use((err, req, res, next) => {
       let status = err.status || 500;
-      let views = app.get('error views');
-      let view = views[status] || views.other;
+      let views = app.get('views').error;
+      let view = views[status] || views.other;
 
       _logger.log(_logger.warn, 'error processing request {0}: {1} {2}', req.path, status, err.message);
       res.locals.message = err.message;
       res.locals.error = app.get('env') === 'development' ? err : {};
       
       res.status(status || 500);
-      res.render(view);
+      res.render(app.get('view getter')(view));
     });
 
     return app;

@@ -17,7 +17,7 @@
     database: 'mongodb://localhost/verlag',
 
     views: {
-      engine: 'pug',
+      engine: undefined,
       path: undefined,
       page: undefined,
       error: {
@@ -29,8 +29,10 @@
       name: 'verlag',
       providers: [
         {
-          type: 'console',
-          level: 'debug'
+          transport: 'Console',
+          level: 'debug',
+          colorize: true,
+          humanReadableUnhandledException: true
         }
       ]
     }
@@ -102,12 +104,12 @@
     }
 
     start() {
-      let mainLogger = new logger(this._settings.logs);
+      let mainLogger = logger(this._settings.logs);
       this.serverLogger = mainLogger.create('server');
       this.serverLogger.log(this.serverLogger.info, 'starting server...');
 
       this.serverLogger.log(this.serverLogger.debug, 'opening database connection...');
-      mongoose.connect(serverOptions.database);
+      mongoose.connect(this._settings.database);
 
       const db = mongoose.connection;
       db.on('error', () => this.serverLogger.log(this.serverLogger.error, 'error opening database connection'));
@@ -123,16 +125,17 @@
         let extensions = _extensions.map(m => require(path.join(__dirname, 'extensions', m)));
 
         this.instance = app();
-        instance.set('locals', this._locals);
-        instance.set('views', this._settings.views);
-        instance.set('logger', mainLogger.create('app', true));
-        instance.set('models', models);
-        instance.set('extensions', extensions);
+        this.instance.set('locals', this._locals);
+        this.instance.set('views', this._settings.views);
+        this.instance.set('view engine', this._settings.views.engine);
+        this.instance.set('logger', mainLogger.create('app', true));
+        this.instance.set('models', models);
+        this.instance.set('extensions', extensions);
 
-        this.server = http.createServer(instance);
-        server.listen(serverOptions.port);
-        server.on('error', this._onError);
-        server.on('listening', this._onListening);
+        this.server = http.createServer(this.instance);
+        this.server.listen(this._settings.port);
+        this.server.on('error', this._onError);
+        this.server.on('listening', this._onListening);
       });
     }
   };
