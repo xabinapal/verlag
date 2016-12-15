@@ -2,137 +2,138 @@
   'use strict';
 
   const extend = require('extend');
+  const http = require('http');
+  const mongoose = require('mongoose');
   const path = require('path');
+
+  const app = require('./app');
+  const logger = require('./logger');
 
   const _models = ['menu', 'page', 'category', 'publication'];
   const _extensions = ['page', 'markdown', 'form', 'mailer', 'catalog'];
 
-  module.exports = (function() {
-    let serverDefaults = {
-      port: 3000,
-      onError: onError,
-      onListening: onListening,
-      databaseConnection: 'mongodb://localhost/verlag',
+  let settings = {
+    port: 3000,
+    database: 'mongodb://localhost/verlag',
 
-      viewsPath: undefined,
-      viewEngine: 'pug',
-
-      pageView: 'page',
-      errorViews: {
-        other: 'error'
-      },
-
-      logFile: null
-    };
-
-    let appDefaults = {
-      appTitle: 'verlag',
-      staticPath: 'static/'
-    };
-
-    let serverLogger;
-
-    let app, http, mongoose;
-    let server, instance;
-
-    let serverOptions, appOptions;
-    let extraModules;
-
-    class Verlag {
-      constructor(options) {
-        app = require('./app');
-        http = require('http');
-
-        mongoose = require('mongoose');
-        mongoose.Promise = global.Promise;
+    views: {
+      engine: 'pug',
+      path: undefined,
+      page: undefined,
+      error: {
+        default: undefined
       }
+    },
 
-      setServerOptions(opts) {
-        serverOptions = {};
-        extend(true, serverOptions, serverDefaults);
-        extend(true, serverOptions, opts);
-      }
-
-      setAppOptions(opts) {
-        appOptions = {};
-        extend(true, appOptions, appDefaults);
-        extend(true, appOptions, opts);
-      }
-
-      startServer() {
-        const logger = require('./logger')(serverOptions.logFile);
-        let mainLogger = new logger('verlag');
-        serverLogger = mainLogger.create('server');
-
-        serverLogger.log(serverLogger.info, 'starting server...');
-
-        let models = Object.create(null);
-
-        serverLogger.log(serverLogger.debug, 'opening database connection...');
-        mongoose.connect(serverOptions.databaseConnection);
-
-        const db = mongoose.connection;
-        db.on('error', () => serverLogger.log(serverLogger.error, 'error opening database connection'));
-        db.once('open', function() {
-          serverLogger.log(serverLogger.debug, 'database connection opened');
-          _models.forEach(function(model) {
-            let m = path.join(__dirname, 'models', model);
-            models[model] = require(m)(mongoose);
-          });
-
-          let extensions = _extensions.map(m => require(path.join(__dirname, 'extensions', m)));
-          instance = app(appOptions);
-
-          instance.set('logger', mainLogger);
-          instance.set('models', models);
-          instance.set('extensions', extensions);
-
-          instance.set('views', serverOptions.viewsPath);
-          instance.set('view engine', serverOptions.viewEngine);
-          instance.set('page view', serverOptions.pageView);
-          instance.set('error views', serverOptions.errorViews);
-
-          server = http.createServer(instance);
-          server.listen(serverOptions.port);
-          server.on('error', serverOptions.onError);
-          server.on('listening', serverOptions.onListening);
-        });
-      }
+    logs: {
+      name: 'verlag',
+      providers: [
+        {
+          type: 'console',
+          level: 'debug'
+        }
+      ]
     }
+  };
 
-    function onError(error) {
-      if (error.syscall !== 'listen') {
-        throw error;
-      }
+  let locals = {
+    appTitle: 'verlag',
+    staticPath: 'static/'
+  };
 
-      let addr = server.address();
-      let bind = typeof addr === 'string'
-        ? 'pipe ' + addr
-        : 'port ' + addr.port;
+  mongoose.promise = global.Promise; 
 
-      switch (error.code) {
-        case 'EACCES':
-          serverLogger.log(serverLogger.error, '{0} requires elevated privileges', bind);
-          process.exit(1);
-          break;
-        case 'EADDRINUSE':
-          serverLogger.log(serverLogger.error, '{0} is already in use', bind);
-          process.exit(1);
-          break;
-        default:
+  module.exports = class Verlag {
+    constructor() {
+      this._onListening = () => {
+        let addr = this.server.address();
+        let bind = typeof addr === 'string'
+          ? 'pipe ' + addr
+          : 'port ' + addr.port;
+
+        this.serverLogger && this.serverLogger.log(this.serverLogger.info, 'listening on {0}', bind);
+      };
+
+      this._onError = error => {
+        if (error.syscall !== 'listen') {
           throw error;
-      }
+        }
+
+        let addr = this.server.address();
+        let bind = typeof addr === 'string'
+          ? 'pipe ' + addr
+          : 'port ' + addr.port;
+
+        switch (error.code) {
+          case 'EACCES':
+            this.serverLogger && this.serverLogger.log(this.serverLogger.error, '{0} requires elevated privileges', bind);
+            process.exit(1);
+            break;
+
+          case 'EADDRINUSE':
+            this.serverLogger && this.serverLogger.log(this.serverLogger.error, '{0} is already in use', bind);
+            process.exit(1);
+            break;
+
+          default:
+            throw error;
+        }
+      };
     }
 
-    function onListening() {
-      let addr = server.address();
-      let bind = typeof addr === 'string'
-        ? 'pipe ' + addr
-        : 'port ' + addr.port;
-
-      serverLogger.log(serverLogger.info, 'listening on {0}', bind);
+    set settings(opts) {
+      this._settings = {};
+      extend(true, this._settings, settings);
+      extend(true, this._settings, opts);
     }
 
-    return Verlag;
-  })();
+    set locals(opts) {
+      this._locals = {};
+      extend(true, this._locals, locals);
+      extend(true, this._locals, opts);
+    }
+
+    set onListening(func) {
+      this._onListening = func;
+    }
+
+    set onError(func) {
+      this._onError = func;
+    }
+
+    start() {
+      let mainLogger = new logger(this._settings.logs);
+      this.serverLogger = mainLogger.create('server');
+      this.serverLogger.log(this.serverLogger.info, 'starting server...');
+
+      this.serverLogger.log(this.serverLogger.debug, 'opening database connection...');
+      mongoose.connect(serverOptions.database);
+
+      const db = mongoose.connection;
+      db.on('error', () => this.serverLogger.log(this.serverLogger.error, 'error opening database connection'));
+      db.once('open', () => {
+        this.serverLogger.log(this.serverLogger.debug, 'database connection opened');
+        
+        let models = Object.create(null);
+        _models.forEach(function(model) {
+          let m = path.join(__dirname, 'models', model);
+          models[model] = require(m)(mongoose);
+        });
+
+        let extensions = _extensions.map(m => require(path.join(__dirname, 'extensions', m)));
+
+        this.instance = app();
+        instance.set('locals', this._locals);
+        instance.set('views', this._settings.views);
+        instance.set('logger', mainLogger.create('app', true));
+        instance.set('models', models);
+        instance.set('extensions', extensions);
+
+        this.server = http.createServer(instance);
+        server.listen(serverOptions.port);
+        server.on('error', this._onError);
+        server.on('listening', this._onListening);
+      });
+    }
+  };
 })();

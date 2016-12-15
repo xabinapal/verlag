@@ -1,7 +1,7 @@
 ;(function() {
   'use strict';
 
-  module.exports = locals => {
+  module.exports = () => {
     const bodyParser = require('body-parser');
     const escapeHtml = require('escape-html');
     const express = require('express');
@@ -14,6 +14,7 @@
     const app = express();
     const set = app.set;
 
+    let _locals = undefined;
     let _logger = undefined;
     let _models = undefined;
     let _extensions = undefined;
@@ -30,8 +31,12 @@
       }
 
       switch (setting) {
+        case 'locals':
+          _locals = val;
+          break;
+
         case 'logger':
-          _logger = val.create('app', true);
+          _logger = val;
           break;
 
         case 'models':
@@ -71,7 +76,7 @@
     app.use((req, res, next) => {
       _logger.log(_logger.info, 'processing request: {0}', req.path);
       [req.logger, req.models] = [_logger, _models];
-      res.locals = locals;
+      res.locals = _locals || {};
       next();
     });
 
