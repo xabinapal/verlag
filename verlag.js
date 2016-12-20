@@ -2,6 +2,7 @@
   'use strict';
 
   const extend = require('extend');
+  const fs = require('fs');
   const http = require('http');
   const mongoose = require('mongoose');
   const path = require('path');
@@ -13,7 +14,9 @@
   const _extensions = ['page', 'markdown', 'form', 'mailer', 'catalog'];
 
   let settings = {
-    port: 3000,
+    port: undefined,
+    sock: undefined,
+    permissions: undefined,
     database: 'mongodb://localhost/verlag',
 
     views: {
@@ -133,9 +136,29 @@
         this.instance.set('extensions', extensions);
 
         this.server = http.createServer(this.instance);
-        this.server.listen(this._settings.port);
+
         this.server.on('error', this._onError);
         this.server.on('listening', this._onListening);
+        
+        if (this._settings.port) {
+          this.serverLogger.log(this.serverLogger.debug, 'binding server to port {0}', this._settings.port);
+          this.server.listen(this._settings.port);
+        } else if (this._settings.sock) {
+          this.serverLogger.log(this.serverLogger.debug, 'binding server to domain socket {0}', this._settings.sock);
+
+          fs.unlink(this._settings.sock, () => {
+            this.server.listen(this._settings.sock, () => {
+              if (this._settings.permissions) {
+                this.serverLogger.log(this.serverLogger.debug, 'setting domain socket permissions to {0}', this._settings.permissions);
+                fs.chmodSync(this._settings.sock, this._settings.permissions);
+              }
+
+
+            });
+          });
+        } else {
+          // TODO: throw error
+        }
       });
     }
   };
