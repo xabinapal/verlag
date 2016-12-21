@@ -149,7 +149,7 @@
           fs.unlink(this._settings.sock, () => {
             this.server.listen(this._settings.sock, () => {
               if (this._settings.permissions) {
-                this.serverLogger.log(this.serverLogger.debug, 'setting domain socket permissions to {0}', this._settings.permissions);
+                this.serverLogger.log(this.serverLogger.debug, 'setting domain socket permissions to {0}', this._settings.permissions.toString(8));
                 fs.chmodSync(this._settings.sock, this._settings.permissions);
               }
 

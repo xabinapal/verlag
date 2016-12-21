@@ -10,7 +10,7 @@
   
     parse(ctx) {
       ctx.content = new showdown.Converter().makeHtml(ctx.section.content);
-      ctx.next();
+      return ctx.success();
     }
   }
 })();

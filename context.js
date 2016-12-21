@@ -25,15 +25,21 @@
 
       this.args = extension.data.args.reduce((map, arg) => map.set(arg.key, arg.value), new Map());
       this.logger = _logger.create(extension.data.name).create(extension.data.action);
-      this._status = this.constructor.SUCCESS;
     }
 
     call(next) {
       let context = findContextByValue(this.type).display;
       _logger.log(_logger.debug, 'injecting {0} extension {1}.{2}', context, this.name, this.action);
-
       this._next = next;
-      return this.exec(this);
+      this.exec(this);
+    }
+
+    success() {
+      return this._next(this.constructor.SUCCESS);
+    }
+
+    abort(code) {
+      return this._next(this.constructor.ABORT, code || 500, true);
     }
 
     arg(arg) {
@@ -60,9 +66,6 @@
       this._status = status;
     }
 
-    get next() {
-      return this._next(this._status);
-    }
 
     get view() {
       return _req.app.get('view getter')(this.args.get('view'));
@@ -140,6 +143,7 @@
       .reduce((map, ctx) => map.set(ctx.context, ctx), new Map());
   };
 
-  module.exports.statuses = statuses;
   module.exports.types = contexts;
+  [...statuses.entries()]
+    .forEach(status => module.exports[status[0]] = status[1]);
 })();

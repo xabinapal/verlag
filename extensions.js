@@ -65,12 +65,19 @@
         req.current.page.extensions,
         extension => extension.postExecute));
 
+       this.logger.log(this.logger.debug, '{0} extension(s) found', extensions.length); 
+
+      let finish = code => code ? next(true) : next();
       (function exec(index) {
-        return status => {
-          let ctx = index < extensions.length ? extensions[index] : null;
-          return ctx ? err => err && next(err) || ctx.call(exec(index + 1)) : next;
-        }
-      })(0)(context.SUCCESS)();
+        return (status, code, abort) => {
+          if (status !== context.SUCCESS && abort) {
+            return next(code || 500);
+          }
+
+          let ctx = extensions[index];
+          return ctx ? ctx.call(exec(index + 1)) : next();
+        };
+      })(0)();
     }
 
     select(type, extensions, condition, section) {

@@ -18,7 +18,7 @@
       });
 
       ctx.content = ctx.render({ recaptcha: captcha && captcha.formElement() });
-      ctx.next();
+      return ctx.success();
     }
 
     validate(ctx) {
@@ -29,8 +29,8 @@
       });
 
       captcha.validateRequest(ctx.req)
-        .then(() => ctx.next())
-        .catch(err => ctx.next(err));
+        .then(() => ctx.success())
+        .catch(err => ctx.error(err));
     }
   }
 })();

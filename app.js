@@ -108,9 +108,7 @@
 
     app.use((req, res, next) => {
       if (!req.current) {
-        let err = new Error('Not found');
-        err.status = 404;
-        return next(err);
+        return next(404);
       }
 
       req.current.page.getData().then(page => {
@@ -148,15 +146,31 @@
     });
 
     app.use((err, req, res, next) => {
-      let status = err.status || 500;
+      let status, message, stack, params;
+
+      if (err instanceof Error) {
+        status = err.status || 500;
+        message = 'error processing request {0}: {1} {2}';
+        params = [req.path, status, err.message];
+        stack = err.stack;
+
+        res.locals.message = err.message;
+        res.locals.error = app.get('env') === 'development' ? err : {};
+      } else {
+        status = parseInt(err) || 500;
+        message = 'error processing request {0}: {1}';
+        params = [req.path, status];
+      }
+
+      _logger.log(_logger.warn, message, ...params);
+      if (stack) {
+        _logger.log(_logger.debug, '{0}', stack);
+      }
+
       let views = app.get('views').error;
       let view = views[status] || views.other;
 
-      _logger.log(_logger.warn, 'error processing request {0}: {1} {2}', req.path, status, err.message);
-      res.locals.message = err.message;
-      res.locals.error = app.get('env') === 'development' ? err : {};
-      
-      res.status(status || 500);
+      res.status(status);
       res.render(app.get('view getter')(view));
     });
 

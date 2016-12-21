@@ -38,7 +38,7 @@
         }
 
         ctx.set('status', err);
-        ctx.next();
+        return ctx.success();
       });
     }
   }

@@ -12,7 +12,7 @@
         menu: ctx.menus.findByKey(ctx.arg('menu'))
       });
 
-      ctx.next();
+      return ctx.success();
     }
 
     setSubtitleLink(ctx) {
@@ -28,11 +28,8 @@
       } else if (extension) {
         link = ctx.locals.extensions.get(extension.extension).get(extension.key);
       } else {
-        ctx.next();
-        return;
+        return ctx.success();
       }
-
-      console.log(link);
 
       switch (ctx.type) {
         case ctx.ROUTER:
@@ -43,7 +40,7 @@
           break;
       }
 
-      ctx.next();
+      return ctx.success();
     }
   }
 })();

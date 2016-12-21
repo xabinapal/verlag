@@ -27,8 +27,8 @@
           });
 
           ctx.content = ctx.render({ categories });
-          ctx.next();
-        }, ctx.err);
+          return ctx.success();
+        });
     }
 
     publications(ctx) {
@@ -36,13 +36,17 @@
 
       ctx.models.category.getByPath(ctx.routers.current.getParameter('category'))
         .then(category => {
+          if (!category) {
+            return ctx.abort(404);
+          }
+
           ctx.section.title = ctx.section.title.replace(ctx.arg('replace'), category.get('name'));
           ctx.section.category = category;
           return ctx.models.publication.getByCategory(category);
-        }, ctx.err).then(publications => {
+        }).then(publications => {
           ctx.content = ctx.render({ publications });
-          ctx.next();
-        }, ctx.err);
+          return ctx.success();
+        });
     }
 
     publication(ctx) {
@@ -60,14 +64,18 @@
 
       ctx.models.publication.getByPath(ctx.routers.current.getParameter('publication'))
         .then(publication => {
+          if (!publication) {
+            return ctx.abort(404);
+          }
+          
           locals.publication = publication;
           return ctx.models.category.getById(publication.categoryId);
-        }, ctx.err).then(category => {
+        }).then(category => {
           locals.category = category;
           ctx.section.title = ctx.section.title.replace(ctx.arg('replace'), category.name);
           ctx.content = ctx.render(locals);
-          ctx.next();
-        }, ctx.err);
+          return ctx.success();
+        });
     }
 
     latest(ctx) {
@@ -81,7 +89,7 @@
           locals.latest = publications;
           let categories = new Set(publications.map(publication => publication.categoryId.toHexString()));
           return ctx.models.category.getById(categories);
-        }, ctx.err).then(categories => {
+        }).then(categories => {
           locals.latest.forEach(publication => {
             let category = (categories || []).find(category => category._id.equals(publication.categoryId));
             if (category) {
@@ -94,10 +102,10 @@
 
               publication.route = ctx.routers.findByBasePath(ctx.arg('route')).create(params);
             }
-          }, ctx.err);
+          });
 
           ctx.content = ctx.render(locals);
-          ctx.next();
+          return ctx.success();
         });
     }
   }
